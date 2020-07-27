@@ -1,0 +1,1 @@
+All documents for this font reside in the fonts/ folder, within "AnonymousProMinus-1.003.tar.gz"

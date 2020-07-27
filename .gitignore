@@ -1,0 +1,8 @@
+/gdb_doc/
+*.o
+*.d
+/*.sublime-project
+/*.tar.gz
+/whitrabt.txt
+/main
+/demo

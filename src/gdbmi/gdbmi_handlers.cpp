@@ -5,10 +5,43 @@
 // #include "gdbmi_handlers.h"
 #endif
 
+#define printf(a, ...) logPrintf(LogLevel::NeedsFix, a,## __VA_ARGS__)
+
 void GDBMI::initHandlers()
 {
 	m_randOffset = 0;
 	fillRandPool();
+	
+	/*
+		thread-group-added;
+		done;
+		breakpoint-created;
+		thread-group-started;
+		thread-created;
+		breakpoint-modified;
+		library-loaded;
+		running;
+		running;
+		stopped;
+		breakpoint-deleted;
+	*/
+	
+	registerCallback("running", GDBMI::runningCallbackThunk);
+	registerCallback("stopped", GDBMI::stoppedCallbackThunk);
+	registerCallback("end-stepping-range", GDBMI::stoppedCallbackThunk);
+	
+	registerCallback("library-loaded", GDBMI::libLoadedCallbackThunk);
+	registerCallback("library-unloaded", GDBMI::libUnloadedCallbackThunk);
+	
+	registerCallback("breakpoint-created", GDBMI::bpCreatedCallbackThunk);
+	registerCallback("breakpoint-modified", GDBMI::bpModifiedCallbackThunk);
+	registerCallback("breakpoint-deleted", GDBMI::bpDeletedCallbackThunk);
+	registerCallback("breakpoint-hit", GDBMI::bpHitCallbackThunk);
+	
+	registerCallback("thread-created", GDBMI::threadCreatedCallbackThunk);
+	registerCallback("thread-selected", GDBMI::threadSelectedCallbackThunk);
+	registerCallback("thread-exited", GDBMI::threadExitedCallbackThunk);
+	
 	
 	m_dispatchThread = thread(GDBMI::handlerDispatchThreadThunk, this);
 }
@@ -23,6 +56,11 @@ void GDBMI::sendCommand(string cmd)
 	if(*(cmd.end() - 1) != '\n')
 		cmd += "\n";
 		
+	char somestr[] = "blahblah";
+	string logCmd("Sending: ");
+	logCmd += cmd;
+	logPrintf(LogLevel::Verbose, logCmd.c_str());
+	
 	m_sendCmdMutex.lock();
 	writePipe(cmd);
 	m_sendCmdMutex.unlock();
@@ -137,36 +175,97 @@ void GDBMI::handleResultRecord(GDBResponse response)
 	if(response.recordClass == "error")
 	{
 		KVPair kvp = parserGetKVPair(response.recordData);
-		printf("Error: %s\n", kvp.second.c_str());
+		logPrintf(LogLevel::Error, "Error: %s\n", kvp.second.c_str());
 	}
 	
-	printf("Unhandled Result record: Class: %s; Data: %s\n",
-		   response.recordClass.c_str(), response.recordData.c_str());
+	CallbackIter cbIter;
+	if(findCallback(response.recordToken, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	if(findCallback(response.recordClass, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	logPrintf(LogLevel::Warn, "Unhandled Result record: Class: %s; Data: %s\n",
+			  response.recordClass.c_str(), response.recordData.c_str());
 }
 
 void GDBMI::handleExecAsyncRecord(GDBResponse response)
 {
-	printf("Unhandled ExecAsync record: Class: %s; Data: %s\n",
-		   response.recordClass.c_str(), response.recordData.c_str());
+	CallbackIter cbIter;
+	if(findCallback(response.recordToken, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	if(findCallback(response.recordClass, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	logPrintf(LogLevel::Warn, "Unhandled ExecAsync record: Class: %s; Data: %s\n",
+			  response.recordClass.c_str(), response.recordData.c_str());
 }
 
 void GDBMI::handleStatusAsyncRecord(GDBResponse response)
 {
-	printf("Unhandled StatusAsync record: Class: %s; Data: %s\n",
-		   response.recordClass.c_str(),
-		   response.recordData.c_str());
+	CallbackIter cbIter;
+	if(findCallback(response.recordToken, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	if(findCallback(response.recordClass, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	logPrintf(LogLevel::Warn, "Unhandled StatusAsync record: Class: %s; Data: %s\n",
+			  response.recordClass.c_str(),
+			  response.recordData.c_str());
 }
 
 void GDBMI::handleNotifyAsyncRecord(GDBResponse response)
 {
-	printf("Unhandled NotifyAsync record: Class: %s; Data: %s\n",
-		   response.recordClass.c_str(),
-		   response.recordData.c_str());
+	CallbackIter cbIter;
+	if(findCallback(response.recordToken, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	if(findCallback(response.recordClass, cbIter) == true)
+	{
+		CmdCallback cbFunc = cbIter->second;
+		cbFunc(this, response);
+		return;
+	}
+	
+	logPrintf(LogLevel::Warn, "Unhandled NotifyAsync record: Class: %s; Data: %s\n",
+			  response.recordClass.c_str(),
+			  response.recordData.c_str());
 }
 
 void GDBMI::handleStreamRecords(GDBResponse response)
 {
-	printf("Unhandled stream record: Data: %s\n", response.recordData.c_str());
+	if(response.recordType != GDBRecordType::ConsoleStream)
+		logPrintf(LogLevel::Warn, "Unhandled stream record: Data: %s\n", response.recordData.c_str());
 }
 
 void GDBMI::registerCallback(string token, CmdCallback cb)
@@ -176,10 +275,17 @@ void GDBMI::registerCallback(string token, CmdCallback cb)
 	m_pendingCmdMutex.unlock();
 }
 
-GDBMI::CallbackIter GDBMI::findCallback(string token)
+bool GDBMI::findCallback(string token, CallbackIter &out)
 {
+	bool ret = false;
 	m_pendingCmdMutex.lock();
-	auto ret = m_pendingCommands.find(token);
+	auto findRet = m_pendingCommands.find(token);
+	
+	if(findRet != m_pendingCommands.end())
+	{
+		out = findRet;
+		ret = true;
+	}
 	m_pendingCmdMutex.unlock();
 	
 	return ret;

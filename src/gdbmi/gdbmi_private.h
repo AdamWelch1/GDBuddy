@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <cstdarg>
 
 #include <vector>
 #include <deque>
@@ -18,6 +19,8 @@
 #include <fcntl.h>
 
 #define GDB_HANDLER_THREAD_COUNT	32
+// #define printf(a, ...) logPrintf(LogLevel::NeedsFix, a,## __VA_ARGS__)
+
 
 using std::string;
 using std::vector;

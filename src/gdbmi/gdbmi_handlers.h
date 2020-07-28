@@ -13,15 +13,16 @@ class GDBMI
 
 #endif
 
-		typedef std::function<void(std::string &)> CmdCallback;
-		typedef std::map<string, CmdCallback>::iterator CallbackIter;
-		
 		#ifdef BUILD_GDBMI_TESTS
 	public:
 		#else
 	private:
 		#endif
 	
+		struct GDBResponse;
+		typedef std::function<void(GDBMI *, GDBResponse)> CmdCallback;
+		typedef std::map<string, CmdCallback>::iterator CallbackIter;
+		
 		enum class GDBRecordType : uint8_t
 		{
 			INVALID = 0,
@@ -41,6 +42,7 @@ class GDBMI
 			std::string recordClass; // Like result-class, async-class
 			std::string recordData;	// Contains record-dependent information
 		};
+		
 		
 		// Called by the GDBMI constructor
 		void initHandlers();
@@ -82,8 +84,8 @@ class GDBMI
 		// Callback handling stuff
 		
 		void registerCallback(string token, CmdCallback cb);
-		CallbackIter findCallback(string token);
-		void eraseCallback(std::map<string, GDBMI::CmdCallback>::iterator &iter);
+		bool findCallback(string token, CallbackIter &out);
+		void eraseCallback(CallbackIter &iter);
 		mutex m_pendingCmdMutex;
 		
 		// This map is used to register callbacks when we receive a response
@@ -92,27 +94,186 @@ class GDBMI
 		std::map<string, CmdCallback> m_pendingCommands; // map<token, callback>
 		
 		
+		// Here we set up some default handlers for certain events.
+		// For these callbacks, we register them under the record class name
+		// that we want the callback to execute for. The "handle_*_Records()" functions
+		// look for a callback under the class name if no token callback is found.
 		
+		// Note: **These callbacks are implemented in 'gdbmi_handlers_cb.cpp'**
+		
+		// ** execution state callbacks ** //
+		
+	public:
+		static void runningCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->runningCallback(resp); }
+		
+	private:
+		void runningCallback(GDBResponse resp);
+		
+	public:
+		static void stoppedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->stoppedCallback(resp); }
+		
+	private:
+		void stoppedCallback(GDBResponse resp);
+		
+	public:
+		static void endStepCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->endStepCallback(resp); }
+		
+	private:
+		void endStepCallback(GDBResponse resp);
+		
+		
+		
+		// ** breakpoint callbacks ** //
+		
+	public:
+		static void bpCreatedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->bpCreatedCallback(resp); }
+		
+	private:
+		void bpCreatedCallback(GDBResponse resp);
+		
+	public:
+		static void bpDeletedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->bpDeletedCallback(resp); }
+		
+	private:
+		void bpDeletedCallback(GDBResponse resp);
+		
+	public:
+		static void bpModifiedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->bpModifiedCallback(resp); }
+		
+	private:
+		void bpModifiedCallback(GDBResponse resp);
+		
+	public:
+		static void bpHitCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->bpHitCallback(resp); }
+		
+	private:
+		void bpHitCallback(GDBResponse resp);
+		
+		
+		// ** shared library callbacks ** //
+		
+	public:
+		static void libLoadedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->libLoadedCallback(resp); }
+		
+	private:
+		void libLoadedCallback(GDBResponse resp);
+		
+	public:
+		static void libUnloadedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->libUnloadedCallback(resp); }
+		
+	private:
+		void libUnloadedCallback(GDBResponse resp);
+		
+		
+		// ** thread event callbacks ** //
+		
+	public:
+		static void threadCreatedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->threadCreatedCallback(resp); }
+		
+	private:
+		void threadCreatedCallback(GDBResponse resp);
+		
+	public:
+		static void threadSelectedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->threadSelectedCallback(resp); }
+		
+	private:
+		void threadSelectedCallback(GDBResponse resp);
+		
+	public:
+		static void threadExitedCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->threadExitedCallback(resp); }
+		
+	private:
+		void threadExitedCallback(GDBResponse resp);
+		
+		
+		// ** data query response callbacks ** ///
+		
+	public:
+		static void getFuncSymbolsCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->getFuncSymbolsCallback(resp); }
+		
+	private:
+		void getFuncSymbolsCallback(GDBResponse resp);
+		
+	public:
+		static void getGlobalVarSymbolsCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->getGlobalVarSymbolsCallback(resp); }
+		
+	private:
+		void getGlobalVarSymbolsCallback(GDBResponse resp);
+		
+	public:
+		static void getDisassemblyCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->getDisassemblyCallback(resp); }
+		
+	private:
+		void getDisassemblyCallback(GDBResponse resp);
+		
+		
+		
+	private:
 		// Output handling stuff
 		void sendCommand(string cmd);
 		mutex m_sendCmdMutex;
 		
+		// We use this to make sure we don't give out the same token
+		// twice in a short period of time
+		vector<uint32_t> m_recentTokens;
 		uint32_t getToken()
 		{
 			m_randMutex.lock();
-			if(m_randOffset >= (2048 - 3))
+			uint32_t ret = 0;
+			
+			while(true)
 			{
-				fillRandPool();
-				m_randOffset = 0;
+				if(m_randOffset >= (2048 - 3))
+				{
+					fillRandPool();
+					m_randOffset = 0;
+				}
+				
+				memcpy(&ret, (m_randPool + m_randOffset), 3);
+				m_randOffset += 3;
+				
+				bool isReused = false;
+				for(auto &i : m_recentTokens)
+				{
+					if(i == ret)
+					{
+						isReused = true;
+						break;
+					}
+				}
+				
+				if(!isReused)
+					break;
 			}
 			
-			uint32_t ret = 0;
-			memcpy(&ret, (m_randPool + m_randOffset), 3);
-			m_randOffset += 3;
 			m_randMutex.unlock();
 			
-			ret >>= 8;
+			// ret >>= 8;
 			return ret;
+		}
+		
+		string getTokenStr()
+		{
+			uint32_t tk = getToken();
+			char intStr[128] = {0};
+			sprintf(intStr, "%u", tk);
+			
+			return string(intStr);
 		}
 		
 		bool fillRandPool()

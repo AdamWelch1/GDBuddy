@@ -2,6 +2,17 @@
 #include "gdbmi.h"
 
 
+void GDBMI::initControl()
+{
+
+}
+
+void GDBMI::destroyControl()
+{
+
+}
+
+
 void GDBMI::doExecCommand(ExecCmd cmd, string location)
 {
 	switch(cmd)
@@ -51,6 +62,7 @@ void GDBMI::doExecCommand(ExecCmd cmd, string location)
 		case ExecCmd::Run:
 		{
 			sendCommand("-exec-run --start");
+			// sendCommand("-exec-run");
 		}
 		break;
 		
@@ -71,5 +83,43 @@ void GDBMI::doExecCommand(ExecCmd cmd, string location)
 			sendCommand("-exec-until " + location);
 		}
 		break;
+	}
+}
+
+void GDBMI::doFileCommand(FileCmd cmd, string arg)
+{
+	switch(cmd)
+	{
+		case FileCmd::FileExec:
+		{
+			printf("\n-file-exec-file command not implemented yet\n");
+		}
+		break;
+		
+		case FileCmd::FileExecWithSymbols:
+		{
+			string token = getTokenStr();
+			auto inferiorLoadCB = [&](GDBMI * obj, GDBResponse resp) -> void
+			{
+				setState(GDBState::Stopped, "Inferior loaded, not running");
+				obj->requestFunctionSymbols();
+				obj->requestGlobalVarSymbols();
+				
+				CallbackIter cb;
+				if(findCallback(resp.recordToken, cb) == true)
+					eraseCallback(cb);
+			};
+			
+			registerCallback(token, inferiorLoadCB);
+			sendCommand(token + string("-file-exec-and-symbols ") + arg);
+		}
+		break;
+		
+		case FileCmd::FileListSharedLibs:
+		{
+			printf("\n-file-symbol-file command not implemented yet\n");
+		}
+		break;
+		
 	}
 }

@@ -15,9 +15,15 @@ class GDBMI
 
 	public:
 	
+		// Called by the GDBMI constructor
+		void initControl();
+		
+		// Called by the GDBMI destructor
+		void destroyControl();
+		
 		enum class ExecCmd : uint8_t
 		{
-			Continue = 100,		// Continue execution
+			Continue = 10,		// Continue execution
 			Finish,				// Execute until current function returns
 			Interrupt,			// Interrupt currently executing program
 			Jump,				// Jump straight to address
@@ -32,6 +38,19 @@ class GDBMI
 		
 		void doExecCommand(ExecCmd cmd, string location = "");
 		
+		enum class FileCmd : uint8_t
+		{
+			FileExec = 30,			// Load inferior to execute without symbols
+			FileExecWithSymbols,	// Load inferior to execute and read symbols from file
+			FileListSharedLibs 		// List the shared libraries in the inferior
+			
+			// Unimplemented:
+			// -file-list-exec-source-file Command
+			// -file-list-exec-source-files Command
+			// -file-symbol-file Command
+		};
+		
+		void doFileCommand(FileCmd cmd, string arg);
 		
 		
 // *INDENT-OFF*

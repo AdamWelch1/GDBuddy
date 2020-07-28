@@ -17,200 +17,21 @@
 #include <GL/glew.h>
 
 using namespace ImGui;
-#define APP_FONT_SIZE			14
+#define APP_FONT_SIZE			16
 #define APP_FONT_DEFAULT		"fonts/Anonymous Pro Minus.ttf"
 #define APP_FONT_BOLD			"fonts/Anonymous Pro Minus B.ttf"
 #define APP_FONT_ITALICS		"fonts/Anonymous Pro Minus I.ttf"
 #define APP_FONT_BOLDITALIC		"fonts/Anonymous Pro Minus BI.ttf"
 
-int32_t gdbPipeIn[2];
-int32_t gdbPipeOut[2];
-pid_t	gdbPID = 0;
-char 	gdbPath[] = "/home/aj/code/official-gdb/gdb_bin/bin/gdb";
 
 void signalHandler(int param)
 {
 	printf("Signal handler; param = %d\n", param);
 }
 
-bool runGDB()
-{
-	int pipeRes = -1;
-	if((pipeRes = pipe(gdbPipeIn)) < 0 || pipe(gdbPipeOut) < 0)
-	{
-		if(pipeRes >= 0)
-		{
-			close(gdbPipeIn[0]);
-			close(gdbPipeIn[1]);
-		}
-		
-		printf("Failed to allocate pipes for GDB child process\n");
-		return false;
-	}
-	
-	pid_t forkRet = fork();
-	
-	if(forkRet == -1)
-	{
-		if(pipeRes >= 0)
-		{
-			close(gdbPipeIn[0]);
-			close(gdbPipeIn[1]);
-		}
-		
-		printf("The fork() call failed when trying to launch GDB\n");
-		return false;
-	}
-	
-	if(forkRet == 0) // Child process
-	{
-		dup2(gdbPipeIn[0], STDIN_FILENO);
-		dup2(gdbPipeOut[1], STDOUT_FILENO);
-		dup2(gdbPipeOut[1], STDERR_FILENO);
-		
-		close(gdbPipeIn[0]);
-		close(gdbPipeIn[1]);
-		close(gdbPipeOut[0]);
-		close(gdbPipeOut[1]);
-		
-		int32_t execRet = execl(gdbPath, gdbPath, "--interpreter=mi", "--nx" /* no .gdbinit */, (char *) 0);
-		
-		exit(execRet);
-	}
-	else // Parent process - us :)
-	{
-		close(gdbPipeIn[0]);
-		close(gdbPipeOut[1]);
-		gdbPID = forkRet;
-		
-		// int flags[2] = {0};
-		// flags[0] = fcntl(gdbPipeIn[1], F_GETFD);
-		// flags[1] = fcntl(gdbPipeOut[0], F_GETFD);
-		
-		// flags[0] |= FD_CLOEXEC;
-		// flags[1] |= FD_CLOEXEC;
-		
-		// fcntl(gdbPipeIn[1], F_SETFD, flags[0]);
-		// fcntl(gdbPipeOut[0], F_SETFD, flags[1]);
-		
-		int nbFlags = fcntl(gdbPipeOut[0], F_GETFL, 0);
-		nbFlags |= O_NONBLOCK;
-		fcntl(gdbPipeOut[0], F_SETFL, nbFlags);
-	}
-	
-	return true;
-}
-
-// bool gdbRead(std::string &buf)
-bool gdbRead(std::string &buf)
-{
-	char readBuf[4096];
-	memset(readBuf, 0, 4096);
-	
-	bool noDataRead = true;
-	int32_t readRes = 0;
-	int32_t readFailCount = 0;
-	
-	std::string tmpStr;
-	
-	while((readRes = read(gdbPipeOut[0], readBuf, 4095)) > 0)
-	{
-		if(readRes == -1 && errno == EAGAIN)
-		{
-			if(readFailCount >= 3)
-				break;
-				
-			usleep(1000 * 10);
-			continue;
-		}
-		
-		if(readRes == -1 && errno != EAGAIN)
-		{
-			if(readFailCount >= 3)
-				break;
-				
-			fprintf(stderr, "[%s:%u] read() failed\n", __FILE__, __LINE__);
-			perror("Error");
-			
-			readFailCount++;
-			usleep(1000 * 100);
-			continue;
-		}
-		
-		noDataRead = false;
-		readFailCount = 0;
-		
-		/*
-			if(buf.allocSize <= (buf.numBytes + readRes))
-			{
-				uint32_t newSize = buf.allocSize;
-				while(newSize <= (buf.numBytes + readRes))
-					newSize += 4096;
-		
-				buf.buf = (uint8_t *) realloc(buf.buf, newSize);
-				buf.allocSize = newSize;
-		
-				if(buf.buf == 0)
-				{
-					printf("realloc() failed to allocate memory!\n");
-					fflush(stdout);
-					abort();
-				}
-			}
-		*/
-		
-		// printf("PROC1: %s\n", readBuf);
-		// memcpy((buf.buf + buf.numBytes), readBuf, readRes);
-		// buf.numBytes += readRes;
-		tmpStr.append(readBuf);
-		memset(readBuf, 0, 4096);
-	}
-	
-	buf = tmpStr;
-	return !(noDataRead);
-}
-
-bool gdbWrite(const std::string &buf)
-{
-	const char *sendBuf = buf.c_str();
-	// printf("Raw write: %s\n", sendBuf);
-	int32_t sentBytes = 0;
-	int32_t writeRes = 0;
-	
-	while((writeRes = write(gdbPipeIn[1], sendBuf, (buf.length() - sentBytes))) > 0)
-	{
-		sentBytes += writeRes;
-		sendBuf += writeRes;
-		usleep(1000 * 10);
-	}
-	
-	if(writeRes <= 0 && errno != EAGAIN)
-	{
-		fprintf(stderr, "[%s:%u] write() failed\n", __FILE__, __LINE__);
-		perror("Error");
-	}
-	
-	if(writeRes < 0 && errno == EAGAIN)
-		writeRes = 0;
-		
-	return (writeRes >= 0);
-}
-
 int main(int argc, char **argv)
 {
 	signal(SIGPIPE, signalHandler);
-	GDBMI tst;
-	
-	while(true)
-		usleep(1000 * 100);
-		
-	return 0;
-	
-	if(!runGDB())
-	{
-		printf("Failed to run GDB\n");
-		return -1;
-	}
 	
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
 	{
@@ -319,14 +140,20 @@ int main(int argc, char **argv)
 		return consoleAlloc;
 	};
 	
-	GDBIO gdb(gdbRead, gdbWrite);
-	gdb.setConsole(consoleBuf, consoleAlloc, consoleBufResize);
+	
+	GDBMI gdb;
+	gdb.doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/home/aj/code/test/main");
+	// gdb.doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/usr/bin/galculator");
+	
+	
+	// GDBIO gdb(gdbRead, gdbWrite);
+	//gdb.setConsole(consoleBuf, consoleAlloc, consoleBufResize);
 	
 	usleep(300 * 1000);
 	
-	gdb.loadInferior("/home/aj/code/mandelbrot/main");
-	// gdb.loadInferior("/usr/bin/galculator");
-	gdb.sendCmd("-gdb-set disassembly-flavor intel\n");
+	//gdb.loadInferior("/home/aj/code/mandelbrot/main");
+	// //gdb.loadInferior("/usr/bin/galculator");
+	//gdb.sendCmd("-gdb-set disassembly-flavor intel\n");
 	
 	float addrColor[4] = {0.000f, 0.748f, 0.856f, 1.000f};
 	float instColor[4] = {0.879f, 0.613f, 0.000f, 1.000f};
@@ -390,6 +217,7 @@ int main(int argc, char **argv)
 			ImGui::EndMenuBar();
 		}
 		
+		GDBMI::GDBState gdbState = gdb.getState();
 		// Toolbar
 		BeginGroup();
 		{
@@ -399,20 +227,21 @@ int main(int argc, char **argv)
 			SameLine();
 			
 			if(IsItemClicked())
-				gdb.runInferior();
+				gdb.doExecCommand(GDBMI::ExecCmd::Run);
 				
-			if(gdb.inferiorIsRunning() == false && gdb.inferiorExited() == false)
+			if(gdb.getState() == GDBMI::GDBState::Stopped)
 			{
 				Button("Cont", buttonSize);
+				
 				if(IsItemClicked())
-					gdb.contInferior();
+					gdb.doExecCommand(GDBMI::ExecCmd::Continue);
 					
 			}
-			else if(gdb.inferiorIsRunning() == true)
+			else if(gdb.getState() == GDBMI::GDBState::Running)
 			{
 				Button("Pause", buttonSize);
 				if(IsItemClicked())
-					gdb.pauseInferior();
+					gdb.doExecCommand(GDBMI::ExecCmd::Interrupt);
 					
 			}
 			
@@ -421,14 +250,29 @@ int main(int argc, char **argv)
 			SameLine();
 			Button("Step", buttonSize);
 			SameLine();
+			
+			if(IsItemClicked())
+				gdb.doExecCommand(GDBMI::ExecCmd::Step);
+				
 			Button("Step Inst", buttonSize);
 			SameLine();
+			
+			if(IsItemClicked())
+				gdb.doExecCommand(GDBMI::ExecCmd::StepInstruction);
+				
 			Button("Step Over", buttonSize);
 			SameLine();
+			
+			if(IsItemClicked())
+				gdb.doExecCommand(GDBMI::ExecCmd::Next);
+				
 			Button("Step Over Inst", buttonSize);
 			SameLine();
 			
-			Text(gdb.getStatusStr().c_str());
+			if(IsItemClicked())
+				gdb.doExecCommand(GDBMI::ExecCmd::NextInstruction);
+				
+			Text(gdb.getStatusMsg().c_str());
 			Separator();
 		}
 		EndGroup();
@@ -443,83 +287,92 @@ int main(int argc, char **argv)
 												 
 			if(BeginTabBar("SymbolsTabList", tabFlags))
 			{
+				vector<GDBMI::SymbolObject> funcList = gdb.getFunctionSymbols();
+				GDBMI::CurrentInstruction curPos = gdb.getCurrentExecutionPos();
+				
 				if(BeginTabItem("Functions"))
 				{
-					gdb.lockSymbols();
-					// std::vector<FileSymbolSet> &funcList = gdb.getFunctionSymbols();
-					std::vector<FileSymbolSet> &funcList = gdb.getFunctionSymbols();
-					
 					static std::string selectedFunc = "";
 					for(uint32_t i = 0; i < funcList.size(); i++)
 					{
-						if(funcList[i].fullName.find(gdb.getProjectDir()) == std::string::npos)
+						// TODO: Fix this ghetto-ass method of checking for external symbols
+						if(funcList[i].fullPath.find("/include/") != std::string::npos)
 							continue;
 							
-						int32_t activeFuncIndex = funcList[i].activeFunctionIndex;
-						for(uint32_t j = 0; j < funcList[i].symbolList.size(); j++)
-						{
-							std::pair<std::string, std::string> &item = funcList[i].symbolList[j];
-							std::string itemTxt = funcList[i].shortName + ":";
-							itemTxt += item.first + " ";
-							itemTxt += item.second;
+						bool funcIsActive = false;
+						if(curPos.second.length() > 0 && funcList[i].name.find(curPos.second) != string::npos)
+							funcIsActive = true;
 							
-							if(activeFuncIndex >= 0 && j == activeFuncIndex)
-								PushFont(boldFont);
-								
-							if(Selectable(item.second.c_str(), (selectedFunc == itemTxt)))
-								selectedFunc = itemTxt;
-								
-							if(activeFuncIndex >= 0 && j == activeFuncIndex)
-								PopFont();
-								
-							if(IsItemHovered())
-								SetTooltip(itemTxt.c_str());
-								
-							if(IsItemClicked())
-							{
-								std::string tmpstr = "-f ";
-								tmpstr += (funcList[i].shortName + " -l ") + item.first;
-								// size_t pos = tmpstr.find_last_of("/");
-								// tmpstr = tmpstr.substr(pos + 1);
-								// tmpstr.insert(tmpstr.begin(), '"');
-								// tmpstr.insert(tmpstr.end(), '"');
-								
-								gdb.showDisassembly(tmpstr);
-							}
+						if(funcIsActive)
+							PushFont(boldFont);
+							
+						string itemText = funcList[i].description;
+						if(Selectable(itemText.c_str(), (selectedFunc == itemText)))
+							selectedFunc = itemText;
+							
+						if(funcIsActive)
+							PopFont();
+							
+						if(IsItemHovered())
+							SetTooltip(itemText.c_str());
+							
+						if(IsItemClicked())
+						{
+							// std::string tmpstr = "-f ";
+							// tmpstr += (funcList[i].shortName + " -l ") + funcList[i].lineNumber;
+							// size_t pos = tmpstr.find_last_of("/");
+							// tmpstr = tmpstr.substr(pos + 1);
+							// tmpstr.insert(tmpstr.begin(), '"');
+							// tmpstr.insert(tmpstr.end(), '"');
+							
+							gdb.requestDisassembleLine(funcList[i].shortName, funcList[i].lineNumber);
 						}
 					}
 					
-					gdb.unlockSymbols();
+					//gdb.unlockSymbols();
+					
 					EndTabItem();
 				}
 				
 				if(BeginTabItem("Imports"))
 				{
-					gdb.lockSymbols();
-					// std::vector<FileSymbolSet> &funcList = gdb.getFunctionSymbols();
-					std::vector<FileSymbolSet> &funcList = gdb.getFunctionSymbols();
-					
 					static std::string selectedFunc = "";
 					for(uint32_t i = 0; i < funcList.size(); i++)
 					{
-						if(funcList[i].fullName.find(gdb.getProjectDir()) != std::string::npos)
+						// TODO: Fix this ghetto-ass method of checking for external symbols
+						if(funcList[i].fullPath.find("/include/") == std::string::npos)
 							continue;
 							
-						for(uint32_t j = 0; j < funcList[i].symbolList.size(); j++)
+						bool funcIsActive = false;
+						if(curPos.second.length() > 0 && funcList[i].name.find(curPos.second) != string::npos)
+							funcIsActive = true;
+							
+						if(funcIsActive)
+							PushFont(boldFont);
+							
+						string itemText = funcList[i].description;
+						if(Selectable(itemText.c_str(), (selectedFunc == itemText)))
+							selectedFunc = itemText;
+							
+						if(funcIsActive)
+							PopFont();
+							
+						if(IsItemHovered())
+							SetTooltip(itemText.c_str());
+							
+						if(IsItemClicked())
 						{
-							std::pair<std::string, std::string> &item = funcList[i].symbolList[j];
-							std::string itemTxt = funcList[i].shortName + ":";
-							itemTxt += item.first + " ";
-							itemTxt += item.second;
-							if(Selectable(item.second.c_str(), (selectedFunc == itemTxt)))
-								selectedFunc = itemTxt;
-								
-							if(IsItemHovered())
-								SetTooltip(itemTxt.c_str());
+							// std::string tmpstr = "-f ";
+							// tmpstr += (funcList[i].shortName + " -l ") + item.first;
+							// size_t pos = tmpstr.find_last_of("/");
+							// tmpstr = tmpstr.substr(pos + 1);
+							// tmpstr.insert(tmpstr.begin(), '"');
+							// tmpstr.insert(tmpstr.end(), '"');
+							
+							//gdb.showDisassembly(tmpstr);
 						}
 					}
 					
-					gdb.unlockSymbols();
 					EndTabItem();
 				}
 				
@@ -534,18 +387,22 @@ int main(int argc, char **argv)
 		PushStyleColor(ImGuiCol_ChildBg, ImVec4(colorColHeader));
 		if(BeginChild("CodeViewPane", {availSize.x * 0.6, availSize.y * 0.6}, true))
 		{
-			static std::string selectedInstr;
-			gdb.lockCodeView();
-			std::vector<DisasLineInfo> &disasLines = gdb.getDisassmemblyLines();
+			static uint64_t selectedInstr = 0;
+			//gdb.lockCodeView();
+			// std::vector<DisasLineInfo> disasLines;// = //gdb.getDisassmemblyLines();
+			vector<GDBMI::DisassemblyInstruction> disasLines = gdb.getDisassembly();
+			GDBMI::CurrentInstruction curPos = gdb.getCurrentExecutionPos();
+			GDBMI::StepFrame stepFrame = gdb.getStepFrame();
+			static uint64_t lastPC = 0;
 			
 			if(disasLines.size() > 0)
 			{
 				ImFont *tmpFont = GetFont();
-				ImVec2 strSize = tmpFont->CalcTextSizeA(APP_FONT_SIZE, FLT_MAX, FLT_MAX, disasLines[0].addr.c_str());
+				ImVec2 strSize = tmpFont->CalcTextSizeA(APP_FONT_SIZE, FLT_MAX, FLT_MAX, disasLines[0].addrStr.c_str());
 				// printf("strSize = %f, %f\n", strSize.x, strSize.y);
 				
 				float winWidth = GetWindowWidth();
-				float adj = (200.0 - strSize.x + 3.0) / winWidth;
+				float adj = (10.0 - strSize.x + 3.0) / winWidth;
 				PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(adj, 0));
 				
 				// This adds some space above the column headers
@@ -579,6 +436,7 @@ int main(int argc, char **argv)
 				
 				if(BeginChild("DisassemblyInstructionList", ImVec2(0, 0), false, 0))
 				{
+					uint32_t lineCtr = 0;
 					Columns(3);
 					Separator();
 					SetColumnWidth(-1, 150.0);
@@ -586,26 +444,48 @@ int main(int argc, char **argv)
 					for(auto &disLine : disasLines)
 					{
 						NextColumn();
-						bool selItem = (selectedInstr == disLine.addr);
+						bool selItem = (selectedInstr == disLine.address);
 						// Text(disLine.addr.c_str());
+						
+						bool instIsPC = false;
+						if(stepFrame.isValid)
+						{
+							if(stepFrame.address == disLine.addrStr)
+								instIsPC = true;
+						}
+						else
+						{
+							// Is this instruction pointed to by the program counter, $pc (ex. eip, rip)
+							if(curPos.first == disLine.address)
+								instIsPC = true;
+						}
 						
 						if(selItem)
 							PushFont(boldFont);
 							
-							
 						PushStyleColor(ImGuiCol_Text, ImVec4(addrColor));
-						Selectable(disLine.addr.c_str(), selItem, ImGuiSelectableFlags_SpanAllColumns);
+						Selectable(disLine.addrStr.c_str(), selItem, ImGuiSelectableFlags_SpanAllColumns);
 						PopStyleColor(1);
 						
+						// if(lastPC != curPos.first)
+						{
+							// lastPC = curPos.first;
+							// SetScrollHereY(0.5);
+							float curLine = static_cast<float>(lineCtr);
+							float numLines = static_cast<float>(disasLines.size());
+							float yPct = curLine / numLines;
+							SetScrollY(GetScrollMaxY() - (yPct * GetScrollMaxY()));
+						}
+						lineCtr++;
 						
 						if(IsItemClicked())
-							selectedInstr = disLine.addr;
+							selectedInstr = disLine.address;
 							
 						NextColumn();
-						if(selItem)
+						if(instIsPC)
 							PushStyleColor(ImGuiCol_Text, ImVec4(instColor));
-						Text(disLine.instr.c_str());
-						if(selItem)
+						Text(disLine.instruction.c_str());
+						if(instIsPC)
 							PopStyleColor(1);
 						NextColumn();
 						
@@ -620,7 +500,7 @@ int main(int argc, char **argv)
 			else
 				PopStyleColor(1);
 				
-			gdb.unlockCodeView();
+			//gdb.unlockCodeView();
 		}
 		else
 			PopStyleColor(1);
@@ -632,35 +512,56 @@ int main(int argc, char **argv)
 		PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
 		availSize = GetContentRegionAvail();
 		availSize.y -= 60.0;
-		gdb.lockConsole();
 		
-		InputTextMultiline("Console", consoleBuf, consoleAlloc, availSize,
-						   (ImGuiInputTextFlags_ReadOnly |
-							ImGuiInputTextFlags_NoHorizontalScroll), 0, 0, gdb.wasConsoleUpdated());
-		gdb.unlockConsole();
-		
-		static bool inputClear = false;
-		static char inputBuf[1024 * 32] = {0};
-		
-		if(!inputClear)
+		PushTextWrapPos(availSize.x * 0.8);
+		static string lastLI = "";
+		deque<GDBMI::LogItem> logs = gdb.getLogs();
+		if(BeginChild("ConsoleOutput", availSize, true, 0))
 		{
-			inputClear = true;
-			memset(inputBuf, 0, (1024 * 32));
-			SetNextWindowFocus();
-			SetKeyboardFocusHere();
+			for(auto &iter : logs)
+			{
+				Selectable(iter.logText.c_str());
+				if(iter.logText == (logs.end() - 1)->logText)
+					SetScrollHereY(1.0);
+			}
 		}
-		
-		if(InputText("ConsoleCmd", inputBuf, (1024 * 32), (ImGuiInputTextFlags_EnterReturnsTrue)))
-		{
-			SetKeyboardFocusHere(-1);
-			SetWindowFocus("ConsoleCmd");
-			std::string inBuf = inputBuf;
-			inBuf += "\n";
-			gdb.sendCmd(inBuf);
-			memset(inputBuf, 0, (1024 * 32));
-		}
+		EndChild();
+		PopTextWrapPos();
 		
 		PopStyleVar(1);
+		
+		
+		//gdb.lockConsole();
+		/*
+			InputTextMultiline("Console", consoleBuf, consoleAlloc, availSize,
+							   (ImGuiInputTextFlags_ReadOnly |
+								ImGuiInputTextFlags_NoHorizontalScroll), 0, 0, false);//gdb.wasConsoleUpdated());
+			//gdb.unlockConsole();
+		
+			static bool inputClear = false;
+			static char inputBuf[1024 * 32] = {0};
+		
+			if(!inputClear)
+			{
+				inputClear = true;
+				memset(inputBuf, 0, (1024 * 32));
+				SetNextWindowFocus();
+				SetKeyboardFocusHere();
+			}
+		
+		
+			if(InputText("ConsoleCmd", inputBuf, (1024 * 32), (ImGuiInputTextFlags_EnterReturnsTrue)))
+			{
+				SetKeyboardFocusHere(-1);
+				SetWindowFocus("ConsoleCmd");
+				std::string inBuf = inputBuf;
+				inBuf += "\n";
+				//gdb.sendCmd(inBuf);
+				memset(inputBuf, 0, (1024 * 32));
+			}
+		*/
+		
+		//PopStyleVar(1);
 		
 		// ImGuiColorEditFlags_ ceFlags = (ImGuiColorEditFlags_)
 		// 							   (ImGuiColorEditFlags_NoAlpha |

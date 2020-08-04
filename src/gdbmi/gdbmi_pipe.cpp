@@ -157,7 +157,7 @@ bool GDBMI::runGDB(std::string gdbPath)
 			close(m_gdbPipeOut[1]);
 		}
 		
-		printf("Failed to allocate pipes for GDB child process\n");
+		logPrintf(LogLevel::Error, "Failed to allocate pipes for GDB child process\n");
 		return false;
 	}
 	
@@ -177,7 +177,7 @@ bool GDBMI::runGDB(std::string gdbPath)
 			close(m_gdbPipeOut[1]);
 		}
 		
-		printf("The fork() call failed when trying to launch GDB\n");
+		logPrintf(LogLevel::Error, "The fork() call failed when trying to launch GDB\n");
 		return false;
 	}
 	

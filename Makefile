@@ -10,7 +10,9 @@ DEPFILES    := $(patsubst %.o,%.d,$(OBJFILES))
 DEFS := 
 CC := g++
 WARNINGS := -Wall -Wextra -Wno-unused-parameter -Wno-narrowing
-CFLAGS := -g3 -O0 --std=c++17 -I./src/imgui/ $(WARNINGS) -fopenmp -lpthread -lGL -lSDL2 -lGLEW
+# CFLAGS := -g3 -O0 --std=c++17 -I./src/ $(WARNINGS) -fopenmp -lpthread -lGL -lSDL2 -lGLEW
+CFLAGS := -O3 --std=c++17 -I./src/ -L/usr/lib/x86_64-linux-gnu/ $(WARNINGS) -no-pie -fopenmp 
+LIBS := -lpthread -lGL -lSDL2 -lGLEW
 OUTFILE := main
 
 -include $(DEPFILES)
@@ -25,7 +27,7 @@ run: main
 	-@./$(OUTFILE)
 	
 main: $(OBJFILES)
-	@g++ -o $(OUTFILE) $(CFLAGS) $(OBJFILES)
+	@g++ -o $(OUTFILE) $(CFLAGS) $(OBJFILES) $(LIBS)
 	
 todolist:
 	-@for file in $(CODEFILES:Makefile=); do fgrep -H -n -e TODO -e FIXME $$file; done; true

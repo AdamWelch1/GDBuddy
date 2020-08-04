@@ -49,8 +49,6 @@ void GDBMI::requestCurrentExecPos()
 			obj->m_curExecPosMutex.lock();
 			obj->m_currentExecPos = {addrInt, name};
 			obj->m_curExecPosMutex.unlock();
-			
-			// obj->requestDisassembleAddr("$pc");
 		}
 	};
 	
@@ -90,6 +88,16 @@ vector<GDBMI::SymbolObject> GDBMI::getGlobalVarSymbols()
 	m_globalVarMutex.lock();
 	ret = m_globalVarSymbols;
 	m_globalVarMutex.unlock();
+	
+	return ret;
+}
+
+vector<GDBMI::RegisterInfo> GDBMI::getRegisters()
+{
+	vector<RegisterInfo> ret;
+	m_regValListMutex.lock();
+	ret = m_regValList;
+	m_regValListMutex.unlock();
 	
 	return ret;
 }

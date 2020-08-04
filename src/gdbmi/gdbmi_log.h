@@ -29,9 +29,10 @@ class GDBMI
 		
 		// printf() compatible log function
 		int32_t logPrintf(LogLevel ll, const char *fmt, ...);
-		int32_t logPrintf(const char *fmt, ...);
 		
 		deque<LogItem> getLogs();
+		
+		void setLogUpdateCB(function<void(GDBMI *)> callback) { m_logUpdateCallback = callback; }
 		
 	private:
 	
@@ -44,6 +45,10 @@ class GDBMI
 		deque<LogItem> m_logItems;
 		LogLevel m_logLevel;
 		mutex m_logMutex;
+		
+		function<void(GDBMI *)> m_logUpdateCallback = 0;
+		
+		char *m_logParseBuffer = 0;
 		
 // *INDENT-OFF*
 #ifndef SOMETHING_UNIQUE_GDBMI_H

@@ -92,7 +92,7 @@ void GDBMI::doFileCommand(FileCmd cmd, string arg)
 	{
 		case FileCmd::FileExec:
 		{
-			printf("\n-file-exec-file command not implemented yet\n");
+			logPrintf(LogLevel::Error, "\n-file-exec-file command not implemented yet\n");
 		}
 		break;
 		
@@ -104,6 +104,12 @@ void GDBMI::doFileCommand(FileCmd cmd, string arg)
 				setState(GDBState::Stopped, "Inferior loaded, not running");
 				obj->requestFunctionSymbols();
 				obj->requestGlobalVarSymbols();
+				
+				
+				string tok2 = obj->getTokenStr();
+				registerCallback(tok2, GDBMI::getregNamesCallbackThunk);
+				
+				sendCommand(tok2 + "-data-list-register-names");
 				
 				CallbackIter cb;
 				if(findCallback(resp.recordToken, cb) == true)
@@ -117,7 +123,7 @@ void GDBMI::doFileCommand(FileCmd cmd, string arg)
 		
 		case FileCmd::FileListSharedLibs:
 		{
-			printf("\n-file-symbol-file command not implemented yet\n");
+			logPrintf(LogLevel::Error, "-file-symbol-file command not implemented yet\n");
 		}
 		break;
 		

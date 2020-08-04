@@ -56,7 +56,6 @@ void GDBMI::sendCommand(string cmd)
 	if(*(cmd.end() - 1) != '\n')
 		cmd += "\n";
 		
-	char somestr[] = "blahblah";
 	string logCmd("Sending: ");
 	logCmd += cmd;
 	logPrintf(LogLevel::Verbose, logCmd.c_str());
@@ -120,7 +119,7 @@ void GDBMI::handleResponse(string &responseStr)
 	else
 	{
 		int32_t comma = -1;
-		for(int32_t i = 0; i < responseStr.length(); i++)
+		for(int32_t i = 0; i < (int32_t) responseStr.length(); i++)
 		{
 			if(responseStr[i] == ' ' || responseStr[i] == ',')
 			{
@@ -170,12 +169,20 @@ void GDBMI::handleResponse(string &responseStr)
 	}
 }
 
+// #define logPrintf(a, b, c, d, e) (fprintf(stderr, "calling logPrintf('%s')\n", b), \
+// 								  fprintf(stderr, "Params: %lu\t%lu\t%lu\n", strlen(c), strlen(d), strlen(e)), \
+// 								  logPrintf(a, b, c, d, e))
+
+
 void GDBMI::handleResultRecord(GDBResponse response)
 {
 	if(response.recordClass == "error")
 	{
+		logPrintf(LogLevel::Debug, "Raw: Token = '%s', %s", response.recordData.c_str());
+		
 		KVPair kvp = parserGetKVPair(response.recordData);
 		logPrintf(LogLevel::Error, "Error: %s\n", kvp.second.c_str());
+		// return;
 	}
 	
 	CallbackIter cbIter;
@@ -193,8 +200,13 @@ void GDBMI::handleResultRecord(GDBResponse response)
 		return;
 	}
 	
-	logPrintf(LogLevel::Warn, "Unhandled Result record: Class: %s; Data: %s\n",
-			  response.recordClass.c_str(), response.recordData.c_str());
+	if(response.recordClass == "error")
+		return;
+		
+	logPrintf(LogLevel::Warn, "Unhandled Result record: Token: %s Class: %s; Data: %s\n",
+			  response.recordToken.c_str(),
+			  response.recordClass.c_str(),
+			  response.recordData.c_str());
 }
 
 void GDBMI::handleExecAsyncRecord(GDBResponse response)
@@ -214,8 +226,8 @@ void GDBMI::handleExecAsyncRecord(GDBResponse response)
 		return;
 	}
 	
-	logPrintf(LogLevel::Warn, "Unhandled ExecAsync record: Class: %s; Data: %s\n",
-			  response.recordClass.c_str(), response.recordData.c_str());
+	logPrintf(LogLevel::Warn, "Unhandled ExecAsync record: Token: %s; Class: %s; Data: %s\n",
+			  response.recordToken.c_str(), response.recordClass.c_str(), response.recordData.c_str());
 }
 
 void GDBMI::handleStatusAsyncRecord(GDBResponse response)
@@ -235,9 +247,8 @@ void GDBMI::handleStatusAsyncRecord(GDBResponse response)
 		return;
 	}
 	
-	logPrintf(LogLevel::Warn, "Unhandled StatusAsync record: Class: %s; Data: %s\n",
-			  response.recordClass.c_str(),
-			  response.recordData.c_str());
+	logPrintf(LogLevel::Warn, "Unhandled StatusAsync record: Token: %s; Class: %s; Data: %s\n",
+			  response.recordToken.c_str(), response.recordClass.c_str(), response.recordData.c_str());
 }
 
 void GDBMI::handleNotifyAsyncRecord(GDBResponse response)
@@ -257,16 +268,17 @@ void GDBMI::handleNotifyAsyncRecord(GDBResponse response)
 		return;
 	}
 	
-	logPrintf(LogLevel::Warn, "Unhandled NotifyAsync record: Class: %s; Data: %s\n",
-			  response.recordClass.c_str(),
-			  response.recordData.c_str());
+	logPrintf(LogLevel::Warn, "Unhandled NotifyAsync record: Token: %s; Class: %s; Data: %s\n",
+			  response.recordToken.c_str(), response.recordClass.c_str(), response.recordData.c_str());
 }
 
 void GDBMI::handleStreamRecords(GDBResponse response)
 {
-	if(response.recordType != GDBRecordType::ConsoleStream)
-		logPrintf(LogLevel::Warn, "Unhandled stream record: Data: %s\n", response.recordData.c_str());
+	// if(response.recordType != GDBRecordType::ConsoleStream)
+	// logPrintf(LogLevel::Info, "Stream record: Data: %s\n", response.recordData.c_str());
 }
+
+// #undef logPrintf
 
 void GDBMI::registerCallback(string token, CmdCallback cb)
 {

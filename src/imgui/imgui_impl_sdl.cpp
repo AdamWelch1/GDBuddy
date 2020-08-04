@@ -248,7 +248,8 @@ static void ImGui_ImplSDL2_UpdateMousePosAndButtons()
 	int mx, my;
 	Uint32 mouse_buttons = SDL_GetMouseState(&mx, &my);
 	io.MouseDown[0] = g_MousePressed[0]
-					  || (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;  // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
+					  || (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) !=
+					  0;  // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
 	io.MouseDown[1] = g_MousePressed[1] || (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
 	io.MouseDown[2] = g_MousePressed[2] || (mouse_buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
 	g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;

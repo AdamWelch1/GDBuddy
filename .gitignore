@@ -1,6 +1,8 @@
 /gdb_doc/
 *.o
 *.d
+imgui.ini
+gdb_manual.txt
 /*.sublime-project
 /*.tar.gz
 /whitrabt.txt

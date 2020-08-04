@@ -10,12 +10,15 @@
 
 void GDBMI::initLogs()
 {
+	// 2 Mb should be enough. Right? Right???
+	m_logParseBuffer = (char *) calloc(1024, 2048);
 	m_logLevel = GDB_DEFAULT_LOG_LEVEL;
 }
 
 void GDBMI::destroyLogs()
 {
-
+	if(m_logParseBuffer != 0)
+		free(m_logParseBuffer);
 }
 
 string GDBMI::getLogLevelColor(LogLevel ll)
@@ -38,53 +41,48 @@ string GDBMI::getLogLevelColor(LogLevel ll)
 
 int32_t GDBMI::logPrintf(LogLevel ll, const char *fmt, ...)
 {
+
 	va_list v;
 	va_start(v, fmt);
 	
-	char logstr[1024 * 32] = {0};
-	int32_t ret = vsprintf(logstr, fmt, v);
+	// char logstr[1024 * 32] = {0};
+	char *logstr = m_logParseBuffer;
+	int32_t ret = vsnprintf(logstr, (1024 * 2048), fmt, v);
 	// (1024 * 32 - 8)
 	
 	va_end(v);
 	
 	string logLabel = getLogLevelLabel(ll);
+	string tColor = getLogLevelColor(ll);
+	string out = tColor + logLabel + string(TERM_DEFAULT) + " ";
 	
 	LogItem newLog;
 	newLog.logLevel = ll;
 	newLog.logText = string(logstr);
 	newLog.label = logLabel;
 	
+	// This keeps us from dumping a bazillion lines to the console
+	if(newLog.logText.length() > 1000)
+		newLog.logText = newLog.logText.substr(0, 1000) + "--CUT--\n";
+		
+	out += newLog.logText;
 	m_logMutex.lock();
 	m_logItems.push_back(newLog);
 	
 	while(m_logItems.size() > GDB_MAX_LOG_ITEMS)
 		m_logItems.pop_front();
 		
-	m_logMutex.unlock();
-	
-	string tColor = getLogLevelColor(newLog.logLevel);
-	string out = tColor + logLabel + string(TERM_DEFAULT) + " ";
-	out += newLog.logText;
-	
 	if(out.back() != '\n')
 		out.append("\n");
 		
 	printf("%s", out.c_str());
+	m_logMutex.unlock();
 	
+	if(m_logUpdateCallback != 0)
+		m_logUpdateCallback(this);
+		
 	return ret;
 }
-
-// int32_t GDBMI::logPrintf(const char *fmt, ...)
-// {
-// 	va_list v;
-// 	va_start(v, fmt);
-
-// 	char logstr[1024 * 32] = {0};
-// 	vsprintf(logstr, fmt, v);
-// 	va_end(v);
-
-// 	return logPrintf(LogLevel::NeedsFix, logstr);
-// }
 
 deque<GDBMI::LogItem> GDBMI::getLogs()
 {

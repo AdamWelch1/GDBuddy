@@ -4,6 +4,234 @@
 		"selected_items":
 		[
 			[
+				"m_console",
+				"m_consoleItemsMutex"
+			],
+			[
+				"m_consol",
+				"m_consoleItems\tvector<ConsoleItem> m_consoleItems"
+			],
+			[
+				"getStat",
+				"getStatusMsg\tstring getStatusMsg()"
+			],
+			[
+				"T",
+				"text\tstring text"
+			],
+			[
+				"ImGuiCol_Ch",
+				"ImGuiCol_ChildBg"
+			],
+			[
+				"funcSymbol",
+				"m_funcSymbolCache"
+			],
+			[
+				"Di",
+				"Disassembly"
+			],
+			[
+				"setca",
+				"setCacheFlag\tvoid setCacheFlag(uint64_t f)"
+			],
+			[
+				"No",
+				"updateNotifyCBThunk\tvoid updateNotifyCBThunk(GDBMI::UpdateType updateType, void *obj)"
+			],
+			[
+				"m_func",
+				"m_funcSymbolCache"
+			],
+			[
+				"FLAG_",
+				"FLAG_GLOBVAR_CACHE_STALE\tFLAG_GLOBVAR_CACHE_STALE"
+			],
+			[
+				"m_cachef",
+				"m_cacheStaleFlags"
+			],
+			[
+				"getCode",
+				"getCodeLinesMtx"
+			],
+			[
+				"GetWin",
+				"GetWindowSize\tImVec2 GetWindowSize()"
+			],
+			[
+				"As",
+				"AsmDump"
+			],
+			[
+				"Asm",
+				"AsmLineDesc"
+			],
+			[
+				"get",
+				"getBoldFont\tconst ImFont * getBoldFont()"
+			],
+			[
+				"resul",
+				"result"
+			],
+			[
+				"UN",
+				"UNIQUE_GUI_CHILD_H"
+			],
+			[
+				"EndTab",
+				"EndTabItem\tvoid EndTabItem()"
+			],
+			[
+				"BeginTab",
+				"BeginTabItem"
+			],
+			[
+				"re",
+				"recordType\tGDBRecordType recordType"
+			],
+			[
+				"__va",
+				"__GNUC_VA_LIST\t__GNUC_VA_LIST"
+			],
+			[
+				"reque",
+				"requestDisassembleAddr\tvoid requestDisassembleAddr(string addr)"
+			],
+			[
+				"m_cure",
+				"m_currentExecPos"
+			],
+			[
+				"m_step",
+				"m_stepFrameMutex"
+			],
+			[
+				"kvpa",
+				"KVPair\tKVPair"
+			],
+			[
+				"scrollhere",
+				"SetScrollHereY\tvoid SetScrollHereY()"
+			],
+			[
+				"parserget",
+				"parserGetKVPairs"
+			],
+			[
+				"parser",
+				"parserGetListItems"
+			],
+			[
+				"m_disasline",
+				"m_disasLines"
+			],
+			[
+				"Dis",
+				"DisassemblyInstruction"
+			],
+			[
+				"request",
+				"requestDisassembleLine"
+			],
+			[
+				"getdis",
+				"getDisassemblyCallbackThunk"
+			],
+			[
+				"reques",
+				"requestCurrentExecPos"
+			],
+			[
+				"registercall",
+				"registerCallback\tvoid registerCallback(string token, CmdCallback cb)"
+			],
+			[
+				"lin",
+				"lineNumber"
+			],
+			[
+				"sympa",
+				"symParts"
+			],
+			[
+				"getfun",
+				"getFuncSymbolsCallbackThunk"
+			],
+			[
+				"getvarsy",
+				"getGlobalVarSymbolsCallbackThunk\tvoid getGlobalVarSymbolsCallbackThunk(GDBMI *obj, GDBResponse resp)"
+			],
+			[
+				"execC",
+				"doExecCommand\tvoid doExecCommand(ExecCmd cmd)"
+			],
+			[
+				"threadS",
+				"threadSelectedCallbackThunk\tvoid threadSelectedCallbackThunk(GDBMI *obj, GDBResponse resp)"
+			],
+			[
+				"threadCre",
+				"threadCreatedCallbackThunk\tvoid threadCreatedCallbackThunk(GDBMI *obj, GDBResponse resp)"
+			],
+			[
+				"bpde",
+				"bpDeletedCallbackThunk\tvoid bpDeletedCallbackThunk(GDBMI *obj, GDBResponse resp)"
+			],
+			[
+				"bpm",
+				"bpModifiedCallbackThunk\tvoid bpModifiedCallbackThunk(GDBMI *obj, GDBResponse resp)"
+			],
+			[
+				"load",
+				"libLoadedCallbackThunk\tvoid libLoadedCallbackThunk(GDBMI *obj, GDBResponse resp)"
+			],
+			[
+				"stoppedCllbac",
+				"stoppedCallbackThunk\tvoid stoppedCallbackThunk(GDBMI *obj, GDBResponse resp)"
+			],
+			[
+				"runningcall",
+				"runningCallbackThunk"
+			],
+			[
+				"registerca",
+				"registerCallback\tvoid registerCallback(string token, CmdCallback cb)"
+			],
+			[
+				"FileExe",
+				"FileExecWithSymbols"
+			],
+			[
+				"sendC",
+				"sendCommand\tvoid sendCommand(string cmd)"
+			],
+			[
+				"Callb",
+				"CallbackIter"
+			],
+			[
+				"recor",
+				"recordType\tGDBRecordType recordType"
+			],
+			[
+				"m_respons",
+				"m_responseQueue"
+			],
+			[
+				"m_responseq",
+				"m_responseQueueMutex"
+			],
+			[
+				"di",
+				"handlerDispatchThreadThunk\tvoid handlerDispatchThreadThunk(GDBMI *obj)"
+			],
+			[
+				"m_response",
+				"m_responseQueueMutex"
+			],
+			[
 				"m_resp",
 				"m_responseQueueMutex"
 			],
@@ -132,20 +360,12 @@
 				"m_consoleBufUsed"
 			],
 			[
-				"m_console",
-				"m_consoleBufUsed"
-			],
-			[
 				"m_conso",
 				"m_consoleBufSize\tuint32_t m_consoleBufSize"
 			],
 			[
 				"consol",
 				"consoleAlloc"
-			],
-			[
-				"recor",
-				"recordClass\tstd::string recordClass"
 			],
 			[
 				"sendCm",
@@ -206,10 +426,6 @@
 			[
 				"AddFontFr",
 				"AddFontFromFileTTF"
-			],
-			[
-				"get",
-				"getFunctionSymbols\tstd::vector<FileSymbolSet> & getFunctionSymbols()"
 			],
 			[
 				"setnex",
@@ -298,313 +514,70 @@
 			[
 				"Console",
 				"ConsoleStream"
-			],
-			[
-				"pthread",
-				"pthread_create\tint pthread_create(pthread_t *__restrict __newthread, const pthread_attr_t *__restrict __attr, void *(*__start_routine)(void *), void *__restrict __arg)"
-			],
-			[
-				"Text",
-				"Text\tvoid Text(const char *fmt, ...)"
-			],
-			[
-				"Selecta",
-				"Selectable"
-			],
-			[
-				"ImGuiTabBarFlags_Fitt",
-				"ImGuiTabBarFlags_FittingPolicyScroll"
-			],
-			[
-				"ImGuiTabBarFlags_No",
-				"ImGuiTabBarFlags_NoCloseWithMiddleMouseButton"
-			],
-			[
-				"GetWindowH",
-				"GetWindowHeight\tfloat GetWindowHeight()"
-			],
-			[
-				"GetWindow",
-				"GetWindowSize"
-			],
-			[
-				"AddFont",
-				"AddFontFromFileTTF\tImFont * AddFontFromFileTTF(const char *filename, float size_pixels)"
-			],
-			[
-				"Menu",
-				"MenuItem\tbool MenuItem(const char *label)"
-			],
-			[
-				"EndM",
-				"EndMenuBar\tvoid EndMenuBar()"
-			],
-			[
-				"BeginM",
-				"BeginMenuBar\tbool BeginMenuBar()"
-			],
-			[
-				"winsiz",
-				"winSize_w"
-			],
-			[
-				"apply",
-				"applyChanges"
-			],
-			[
-				"getproto",
-				"getProtocol\tstring getProtocol(RuleProtocol protocol)"
-			],
-			[
-				"proto",
-				"RuleProtocol\tRuleProtocol"
-			],
-			[
-				"CHAIN_POLI",
-				"CHAIN_POLICY_DROP"
-			],
-			[
-				"CHAIN",
-				"CHAIN_INPUT"
-			],
-			[
-				"iptc_next_ch",
-				"iptc_next_chain\tconst char * iptc_next_chain(struct xtc_handle *handle)"
-			],
-			[
-				"CHAIN_P",
-				"CHAIN_POLICY_DROP"
-			],
-			[
-				"swapby",
-				"swapByteOrder"
-			],
-			[
-				"swap",
-				"swapByteOrder\tuint32_t swapByteOrder(uint32_t val)"
-			],
-			[
-				"ipt_e",
-				"ipt_entry_match\tipt_entry_match"
-			],
-			[
-				"iptc_app",
-				"iptc_append_entry\tint iptc_append_entry(const char *chain, const struct ipt_entry *e, struct xtc_handle *handle)"
-			],
-			[
-				"iptc_next",
-				"iptc_next_chain\tconst char * iptc_next_chain(struct xtc_handle *handle)"
-			],
-			[
-				"ipt_strerr",
-				"iptc_strerror\tconst char * iptc_strerror(int err)"
-			],
-			[
-				"ipt_first",
-				"iptc_first_chain\tconst char * iptc_first_chain(struct xtc_handle *handle)"
-			],
-			[
-				"ipt_init",
-				"iptc_init\tstruct xtc_handle * iptc_init(const char *tablename)"
-			],
-			[
-				"iptc_str",
-				"iptc_strerror\tconst char * iptc_strerror(int err)"
-			],
-			[
-				"iptc_dele",
-				"iptc_delete_entry\tint iptc_delete_entry(const char *chain, const struct ipt_entry *origfw, unsigned char *matchmask, struct xtc_handle *handle)"
-			],
-			[
-				"iptc_flu",
-				"iptc_flush_entries\tint iptc_flush_entries(const char *chain, struct xtc_handle *handle)"
-			],
-			[
-				"iptc_first_rul",
-				"iptc_first_rule\tconst struct ipt_entry * iptc_first_rule(const char *chain, struct xtc_handle *handle)"
-			],
-			[
-				"iptc_set",
-				"iptc_set_policy\tint iptc_set_policy(const char *chain, const char *policy, struct xt_counters *counters, struct xtc_handle *handle)"
-			],
-			[
-				"m_iptch",
-				"m_iptcHandleFilter"
-			],
-			[
-				"set",
-				"set_data\tvoid set_data(uint64_t bits)"
-			],
-			[
-				"perror",
-				"perror\tvoid perror(const char *__s)"
-			],
-			[
-				"ipc_clo",
-				"ipc_close_channel\tint ipc_close_channel(int chId)"
-			],
-			[
-				"ipc_write",
-				"ipc_write_object\tint ipc_write_object(int chId, const void *obj, int objSize)"
-			],
-			[
-				"ipc_conn",
-				"ipc_connect_channel\tint ipc_connect_channel(const char *chName, enum ipc_transport transportType, enum ipc_msg msgType, enum ipc_block blockMode)"
-			],
-			[
-				"ipc_read_objec",
-				"ipc_read_object\tint ipc_read_object(int chId, void *obj, int objSize)"
-			],
-			[
-				"ipc_read",
-				"ipc_read_object"
-			],
-			[
-				"SYS",
-				"SYSUPDATE_MAX_SIZE"
-			],
-			[
-				"UpdateP",
-				"SystemUpdatePkt\tSystemUpdatePkt"
-			],
-			[
-				"m_rawpa",
-				"m_rawPacketSize"
-			],
-			[
-				"sen",
-				"sendPacket\tbool sendPacket(GCPacket *packet)"
-			],
-			[
-				"FOR",
-				"FORMAT_26_BIT"
-			],
-			[
-				"pcap_set_time",
-				"pcap_set_timeout\tint pcap_set_timeout(pcap_t *, int)"
-			],
-			[
-				"pcap_setnonblock",
-				"pcap_setnonblock\tint pcap_setnonblock(pcap_t *, int, char *)"
-			],
-			[
-				"goconnman",
-				"goConnManagerMtx"
-			],
-			[
-				"pthread_muex",
-				"pthread_mutex_unlock"
-			],
-			[
-				"goconn",
-				"goConnManagerMtx"
-			],
-			[
-				"pthread_mutex_t",
-				"pthread_mutex_trylock\tint pthread_mutex_trylock(pthread_mutex_t *__mutex)"
-			],
-			[
-				"GOCONN",
-				"GOCONN_TLS_PORT"
-			],
-			[
-				"goconnhan",
-				"goConnHandlerMtx"
-			],
-			[
-				"is",
-				"isConnected"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
+			"file": "src/gui/gui_defs.h",
+			"settings":
+			{
+				"buffer_size": 2594,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
 			"file": "src/main.cpp",
 			"settings":
 			{
-				"buffer_size": 17399,
+				"buffer_size": 5754,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/gdb_io.h",
+			"file": "src/gui/guimanage.cpp",
 			"settings":
 			{
-				"buffer_size": 7568,
+				"buffer_size": 7659,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/gdb_io.cpp",
+			"file": "src/gui/gui_codeview.h",
 			"settings":
 			{
-				"buffer_size": 33183,
+				"buffer_size": 849,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/gdbmi/gdbmi_private.h",
+			"file": "src/gui/gui_codeview.cpp",
 			"settings":
 			{
-				"buffer_size": 593,
+				"buffer_size": 3457,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/gdbmi/gdbmi.h",
+			"file": "src/gui/gui_console.h",
 			"settings":
 			{
-				"buffer_size": 722,
+				"buffer_size": 693,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/gdbmi/gdbmi.cpp",
+			"file": "src/gui/gui_console.cpp",
 			"settings":
 			{
-				"buffer_size": 292,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/gdbmi/gdbmi_handlers.h",
-			"settings":
-			{
-				"buffer_size": 2976,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/gdbmi/gdbmi_handlers.cpp",
-			"settings":
-			{
-				"buffer_size": 7323,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/gdbmi/gdbmi_pipe.cpp",
-			"settings":
-			{
-				"buffer_size": 3939,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "gdb_doc/CommandsIndex.txt",
-			"settings":
-			{
-				"buffer_size": 6368,
+				"buffer_size": 543,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -637,6 +610,10 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
 			[
 				"auto",
 				"AutoFoldCode: Open Settings"
@@ -696,17 +673,13 @@
 			[
 				"install package",
 				"Package Control: Install Package"
-			],
-			[
-				"pack",
-				"Install Package Control"
 			]
 		],
 		"width": 0.0
 	},
 	"console":
 	{
-		"height": 627.0,
+		"height": 278.0,
 		"history":
 		[
 			"clear",
@@ -736,24 +709,98 @@
 	[
 		"/home/aj/code/gui_stuff",
 		"/home/aj/code/gui_stuff/src",
-		"/home/aj/code/gui_stuff/src/gdbmi"
+		"/home/aj/code/gui_stuff/src/gdbmi",
+		"/home/aj/code/gui_stuff/src/gui",
+		"/home/aj/code/gui_stuff/src/imgui"
 	],
 	"file_history":
 	[
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_pipe.cpp",
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_pipe.h",
+		"/home/aj/code/gui_stuff/Makefile",
+		"/home/aj/code/official-gdb/binutils-gdb/gdb/README",
+		"/tmp/piped_input_10570918539466441321.txt",
+		"/usr/include/SDL2/SDL_mouse.h",
+		"/home/aj/git_tools/coreutils/coreutils-8.32/Makefile",
+		"/tmp/piped_input_17131613307166417076.txt",
+		"/tmp/piped_input_13653763329704765298.txt",
+		"/tmp/piped_input_11810449988876759616.txt",
+		"/home/aj/.config/kitty/kitty.conf",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_handlers.cpp",
+		"/home/aj/code/gui_stuff/src/gui/guimanage.h",
+		"/home/aj/code/gui_stuff/src/gui/gui_child.h",
+		"/home/aj/code/gui_stuff/src/imgui/imgui.h",
+		"/home/aj/code/gui_stuff/src/gui/gui_toolbar.cpp",
+		"/home/aj/code/gui_stuff/src/gui/gui_toolbar.h",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_state.h",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_state.cpp",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_handlers_cb.cpp",
 		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_handlers.h",
+		"/home/aj/code/gui_stuff/oldmain.cpp",
+		"/home/aj/.config/sublime-text-3/Packages/User/SublimeLinter.sublime-settings",
+		"/home/aj/.config/sublime-text-3/Packages/SublimeLinter/SublimeLinter.sublime-settings",
+		"/home/aj/.config/sublime-text-3/Packages/SublimeLinter-gcc/README.md",
+		"/home/aj/code/gui_stuff/gui.sublime-project",
+		"/home/aj/code/gui_stuff/src/gui/guimanage.cpp",
+		"/home/aj/code/gui_stuff/src/gui/gui_codeview.cpp",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_data.cpp",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_data.h",
+		"/home/aj/code/gui_stuff/src/gui/gui_tabpanel.cpp",
+		"/home/aj/code/gui_stuff/src/gui/gui_codeview.h",
+		"/home/aj/code/gui_stuff/src/gui/gui_tabpanel.h",
+		"/home/aj/code/gui_stuff/src/gui/gui_defs.h",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_log.cpp",
+		"/home/aj/Videos/mtl_list.txt",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_log.h",
+		"/home/aj/mount/useful_commands.txt",
+		"/tmp/piped_input_2838262685875013324.txt",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_control.h",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_control.cpp",
+		"/usr/include/SDL2/SDL_cpuinfo.h",
+		"/home/aj/code/gui_stuff/src/gui/SDL.h",
+		"/home/aj/code/gui_stuff/src/imgui/imgui_internal.h",
+		"/home/aj/code/gui_stuff/src/imgui/imgui_impl_sdl.cpp",
+		"/usr/include/SDL2/SDL_video.h",
+		"/usr/include/SDL2/SDL.h",
+		"/home/aj/code/gui_stuff/src/imgui/imgui_impl_sdl.h",
+		"/home/aj/code/gui_stuff/src/guimanage.h",
+		"/home/aj/code/gui_stuff/src/guimanage.cpp",
+		"/home/aj/code/ascii_control_codes.txt",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_test.cpp",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_pipe.cpp",
+		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Stack Manipulation.txt",
+		"/home/aj/code/gui_stuff/.gitignore",
 		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi.h",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_private.h",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi.cpp",
+		"/usr/include/SDL2/SDL_events.h",
+		"/home/aj/code/test/src/main.cpp",
+		"/home/aj/code/test/Makefile",
+		"/tmp/piped_input_6347527361929634304.txt",
+		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Symbol Query.txt",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_parse.cpp",
+		"/tmp/piped_input_10035200953236486341.txt",
+		"/home/aj/code/gui_stuff/gdb_doc/CommandsIndex.txt",
+		"/tmp/piped_input_6433967706084844720.txt",
+		"/home/aj/code/gui_stuff/unhandled_records.txt",
+		"/home/aj/code/gui_stuff/.git/COMMIT_EDITMSG",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_parse.h",
+		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_pipe.h",
+		"/tmp/piped_input_7663359846780951593.txt",
+		"/home/aj/code/official-gdb/binutils-gdb/gdb/doc/Doxyfile-gdb-api.in",
+		"/home/aj/code/official-gdb/binutils-gdb/gdb/doc/stack_frame.txt",
+		"/home/aj/code/gui_stuff/font_licenses/WhiteRabbit_license.txt",
+		"/home/aj/code/gui_stuff/font_licenses/ClassicConsole_license.txt",
+		"/home/aj/code/gui_stuff/gdb_doc/ref/Shared_library_catchpoint_commands.txt",
+		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI General Design.txt",
+		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Program Execution.txt",
+		"/home/aj/code/gui_stuff/gdb_doc/ref/Thread_groups",
+		"/home/aj/code/gui_stuff/gdb_doc/ref/Context_management",
+		"/home/aj/code/gui_stuff/gdb_doc/ref/Asynchronous_and_non-stop_modes",
+		"/usr/include/asm-generic/errno-base.h",
+		"/home/aj/code/gui_stuff/src/gdb_io.h",
+		"/home/aj/code/gui_stuff/src/gdb_io.cpp",
 		"/home/aj/code/gui_stuff/src/main.cpp",
 		"/usr/include/unistd.h",
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi.cpp",
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_parse.h",
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_test.cpp",
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_parse.cpp",
-		"/home/aj/code/gui_stuff/Makefile",
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_private.h",
 		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_broker.cpp",
-		"/home/aj/code/gui_stuff/src/gdbmi/gdbmi_handlers.cpp",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Data Manipulation.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Ada Exceptions Commands.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Ada Tasking Commands.txt",
@@ -765,20 +812,15 @@
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Development and Front Ends.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI File Commands.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI File Transfer Commands.txt",
-		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI General Design.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Miscellaneous Commands.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Output Records.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Program Context.txt",
-		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Program Execution.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Simple Examples.txt",
-		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Stack Manipulation.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Support Commands.txt",
-		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Symbol Query.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Target Manipulation.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Thread Commands.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Tracepoint Commands.txt",
 		"/home/aj/code/gui_stuff/gdb_doc/GDB_MI Variable Objects.txt",
-		"/home/aj/code/gui_stuff/src/gdb_io.cpp",
 		"/home/aj/code/gui_stuff/src/category_urls.txt",
 		"/home/aj/code/gui_stuff/gui_libs/imgui/imgui_demo.cpp",
 		"/home/aj/code/gui_stuff/gui_libs/imgui/imgui.cpp",
@@ -787,12 +829,10 @@
 		"/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h",
 		"/home/aj/code/gui_stuff/strace.txt",
 		"/home/aj/code/gui_stuff/src/imgui/imgui_widgets.cpp",
-		"/home/aj/code/gui_stuff/src/imgui/imgui_internal.h",
 		"/home/aj/code/gui_stuff/gui_libs/imgui/imgui_internal.h",
 		"/home/aj/code/gui_stuff/gui_libs/imgui/imgui_widgets.cpp",
 		"/home/aj/code/gui_stuff/src/imgui/imgui_demo.cpp",
 		"/home/aj/.config/sublime-text-3/Packages/User/makerun.sublime-build",
-		"/home/aj/code/gui_stuff/src/imgui/imgui.h",
 		"/home/aj/code/gui_stuff/gui_libs/imgui/gui.sublime-project",
 		"/home/aj/.cache/.fr-ZNR0If/AnonymousProMinus-1.003/FONTLOG.txt",
 		"/home/aj/code/gui_stuff/font_licenses/AnonymousPro_license.txt",
@@ -802,72 +842,7 @@
 		"/tmp/piped_input_10569000985548805329.txt",
 		"/home/aj/.config/sublime-text-3/Packages/User/SublimeAStyleFormatter.sublime-settings",
 		"/home/aj/code/gui_stuff/font_licenses/Read_Me.txt",
-		"/home/aj/.cache/.fr-mpbTUl/Read_Me.txt",
-		"/home/aj/.cache/.fr-mF3IXp/License.txt",
-		"/home/aj/code/gui_stuff/font_licenses/JackInput_license.txt",
-		"/home/aj/.cache/.fr-koAZMr/whitrabt.txt",
-		"/home/aj/.cache/.fr-8s0ACt/license.txt",
-		"/home/aj/code/gui_stuff/src/imgui_example.cxx",
-		"/usr/include/SDL2/SDL.h",
-		"/usr/include/SDL2/SDL_error.h",
-		"/home/aj/code/gui_stuff/src/imgui/imgui_impl_sdl.cpp",
-		"/home/aj/code/gui_stuff/gui_libs/imgui/misc/fonts/binary_to_compressed_c.cpp",
-		"/home/aj/code/guilite_stuff/test_project/Makefile",
-		"/home/aj/code/guilite_stuff/gui_libs/mygui/build/Docs/CMakeFiles/api-docs.dir/build.make",
-		"/home/aj/code/guilite_stuff/gui_libs/mygui/build/Docs/Doxywizard.log",
-		"/home/aj/code/guilite_stuff/GuiLite/documents/HowLayoutWork.md",
-		"/home/aj/openwrt/REM/sl_networkd/src/firewall.cpp",
-		"/home/aj/openwrt/REM/sl_networkd/src/firewall.h",
-		"/home/aj/openwrt/REM/shared/src/slstring.h",
-		"/home/aj/openwrt/REM/shared/src/array.h",
-		"/home/aj/openwrt/REM/sl_networkd/src/main.cpp",
-		"/tmp/piped_input_16424067027625257639.txt",
-		"/tmp/piped_input_12836817538195794815.txt",
-		"/home/aj/openwrt/REM/sl_networkd/Makefile",
-		"/tmp/piped_input_6770864688164181637.txt",
-		"/tmp/piped_input_386379820133741642.txt",
-		"/tmp/piped_input_16779877255371051119.txt",
-		"/tmp/piped_input_9989753230623222267.txt",
-		"/home/aj/openwrt/REM/sl_networkd/src/sl_discover.cpp",
-		"/home/aj/Guitar Lesson vids/Cross my heart info.txt",
-		"/home/aj/openwrt/openwrt/staging_dir/target-mipsel_24kc_musl/usr/include/libiptc/libiptc.h",
-		"/usr/include/asm-generic/errno-base.h",
-		"/usr/include/errno.h",
-		"/home/aj/.config/kitty/kitty.conf",
-		"/tmp/piped_input_17110939732345316115.txt",
-		"/home/aj/openwrt/REM/sl_networkd/noncrash_dump.txt",
-		"/home/aj/openwrt/REM/sl_networkd/crashing_dump.txt",
-		"/tmp/piped_input_6984958417228588449.txt",
-		"/home/aj/.cache/.fr-Db5FZn/kitty-master/diff.conf",
-		"/usr/include/linux/netfilter/x_tables.h",
-		"/home/aj/openwrt/openwrt/staging_dir/toolchain-mipsel_24kc_gcc-7.5.0_musl/include/linux/netfilter/x_tables.h",
-		"/usr/include/linux/netfilter_ipv4/ip_tables.h",
-		"/usr/include/linux/kernel.h",
-		"/home/aj/openwrt/REM/shared/src/utility.cpp",
-		"/home/aj/openwrt/openwrt/staging_dir/target-mipsel_24kc_musl/usr/include/xtables.h",
-		"/home/aj/openwrt/REM/iptables_ltrace.txt",
-		"/home/aj/openwrt/REM/sl_networkd/src/test/main.cpp",
-		"/home/aj/openwrt/REM/sl_networkd/src/test/test.sh",
-		"/home/aj/.config/sublime-text-3/Packages/SublimeAStyleFormatter/Default (Linux).sublime-keymap",
-		"/home/aj/openwrt/openwrt/staging_dir/target-mipsel_24kc_musl/usr/include/iptables.h",
-		"/home/aj/openwrt/REM/shared/src/ipc.h",
-		"/home/aj/openwrt/REM/wgOSDP_svc/src/main.cpp",
-		"/home/aj/openwrt/REM/Protocol Specification Version 1.txt",
-		"/home/aj/openwrt/REM/shared/src/i2c.h",
-		"/home/aj/openwrt/REM/libipc/ipc.h",
-		"/home/aj/openwrt/REM/wgOSDP_svc/src/ipc.h",
-		"/home/aj/openwrt/REM/shared/src/udsocket.cpp",
-		"/home/aj/openwrt/REM/sl_networkd/src/sl_protocol.cpp",
-		"/home/aj/openwrt/REM/discovery_client/src/sl_protocol.h",
-		"/home/aj/openwrt/REM/discovery_client/src/main.cpp",
-		"/home/aj/code/audio_modulator/src/main.cpp",
-		"/home/aj/openwrt/openwrt/files/etc/banner",
-		"/home/aj/.config/sublime-text-3/Packages/User/Default (Linux).sublime-keymap",
-		"/home/aj/openwrt/REM/sl_networkd/src/sl_protocol.h",
-		"/home/aj/openwrt/REM/discovery_client/src/token.cpp",
-		"/home/aj/openwrt/REM/discovery_client/src/sl_protocol.cpp",
-		"/home/aj/openwrt/openwrt/staging_dir/target-mipsel_24kc_musl/usr/include/mbedtls/net_sockets.h",
-		"/home/aj/openwrt/REM/sl_networkd/src/sl_discover.h"
+		"/home/aj/.cache/.fr-mpbTUl/Read_Me.txt"
 	],
 	"find":
 	{
@@ -878,6 +853,14 @@
 		"height": 144.0,
 		"where_history":
 		[
+			"/home/aj/code/gui_stuff/src/gdbmi",
+			"/home/aj/code/gui_stuff/src",
+			"/home/aj/code/gui_stuff/src/gdbmi",
+			"/home/aj/code/gui_stuff/src",
+			"/home/aj/code/gui_stuff/gdb_doc",
+			"/home/aj/code/gui_stuff/src",
+			"/home/aj/code/gui_stuff/gdb_doc",
+			"/home/aj/code/gui_stuff/src/gdbmi",
 			"/home/aj/code/gui_stuff/gdb_doc"
 		]
 	},
@@ -886,38 +869,134 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"m_handlerQueueMutex",
-			"HANDLERS",
-			"buf",
-			"gdbPipe",
-			"str",
-			"void",
-			"GDBResponse",
+			"4.2",
+			"m_parent",
+			"install:",
+			"ime",
+			"sublime",
+			",",
+			"16",
+			"CODEVIEW",
+			"mutex",
+			"stepFrame",
+			"curPos",
+			"getcursorposy",
+			"TABPANEL",
+			"protected",
+			"m_currentExecPos",
+			"gui",
+			"LogLevel::Debug",
+			"getFuncSymbolsCallback",
+			"\\bprintf",
+			"printf",
+			"contentsize",
+			"padding",
+			"int32_t",
+			"leftPanel",
+			"p",
+			"logPrintf",
+			"StyleColor",
+			"gui",
+			"TABPANEL",
+			"curPos",
+			"gui",
+			"curPos",
+			"funcList",
+			"SDL.h",
+			"SDL_GLContext",
+			"\"",
+			"\"\\n",
+			" \"",
+			"<\"",
+			"ImGuiContext",
+			"context",
+			"m_glContext",
+			"m_sdlWindow",
+			"&",
+			"io",
+			"clear_color",
+			");\n",
+			"winSize_w",
+			"Window",
+			"window",
+			"\t\t\n",
+			"[[maybe_unused]]",
+			"io.",
+			"\\btab",
+			"ctrl-",
+			"_\\|",
+			"ctl-",
+			"\\tprintf",
+			"history",
+			"function.{1,20}history",
+			"-stack-list-variables",
+			"hints",
+			"info address",
+			"return",
+			"logprintf",
+			"printf",
+			"unhandled",
+			"fmt",
+			"va_arg",
+			"DATA",
+			"struct imfont",
+			"SDL_KEYBOARD",
+			"symbol-list-lines",
+			"line[^=]",
+			"line",
+			"info",
+			"requestDisassembleAddr",
+			"rootPair",
+			"stopped",
+			"ExecCmd",
+			"selItem",
+			"rawList",
+			"flavor",
+			"flavvor",
+			"},{",
+			"GlobalVarSymbols",
+			"pair<uint64_t, string>",
+			"weight",
+			"itemTxt",
+			"GDBMI::",
+			"symPair",
+			"end() - 1",
+			"cbIter->second",
+			"symbolList",
+			"iter",
+			"symKVP",
+			"Func",
+			"threadExited",
+			"Next",
+			"ExecCmd",
+			"stopped",
+			"Stopped",
+			"STATE",
+			"Loaded",
+			"Selected",
+			"deleted",
+			"modified",
+			"Modified",
+			"Deleted",
+			"response",
+			" [^ ]+;",
+			"^unhandled .+?;",
 			"PARSE",
-			"key",
-			"rintf(\"String = %s\\n\", str.c_str());\n\t\tf",
-			"std::",
-			"std::string",
-			"[i]",
-			"disassembleFunc",
-			"eval",
-			"exp",
-			"getFunctionAtAddress",
-			"exec-run",
-			"runInferior",
-			"data-disassemble",
-			"-exec-run",
-			"disassembl",
-			"data-evaluate-expression",
-			"data",
-			"expr",
-			"symbol",
-			"\\n{12}",
-			"\\n[12]",
-			"\\t\\t\\t\\t",
-			"\"[a-z]+.+?\"",
-			">.+?<",
-			"<a href.+?</a>"
+			"^unhandled .+?record: class: .+?;",
+			"gdb.",
+			"case",
+			"HANDLERS",
+			" ",
+			"href=\".+?\"",
+			"href=\".+?</a>",
+			"top mode",
+			"mode",
+			"non-stop",
+			"background",
+			"gdbPipe",
+			"registerCallback",
+			"pthread",
+			"m_pendingCmdMutex"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -925,6 +1004,18 @@
 		"regex": false,
 		"replace_history":
 		[
+			"",
+			"\">\\n",
+			" <\"",
+			"*m_sdlWindow",
+			"ctl-",
+			"_____\\|",
+			"ctrl-    ",
+			"},\\n{",
+			"CurrentInstruction",
+			"_",
+			"m_pendingCmdMutex.unlock()",
+			"m_pendingCmdMutex.lock()",
 			"",
 			"string",
 			""
@@ -938,24 +1029,24 @@
 	"groups":
 	[
 		{
-			"selected": 8,
+			"selected": 2,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "src/main.cpp",
+					"file": "src/gui/gui_defs.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 17399,
+						"buffer_size": 2594,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4133,
-								4133
+								1036,
+								1036
 							]
 						],
 						"settings":
@@ -964,27 +1055,27 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 693.0,
+						"translation.y": 616.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 8,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "src/gdb_io.h",
+					"file": "src/main.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 7568,
+						"buffer_size": 5754,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								829,
-								829
+								5751,
+								5751
 							]
 						],
 						"settings":
@@ -993,160 +1084,35 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 189.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 7,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "src/gdb_io.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 33183,
-						"regions":
-						{
-							"bookmarks":
-							{
-								"flags": 144,
-								"icon": "bookmark",
-								"regions":
-								[
-									[
-										26883,
-										26883
-									],
-									[
-										31553,
-										31553
-									]
-								],
-								"scope": "bookmarks"
-							}
-						},
-						"selection":
-						[
-							[
-								24909,
-								24909
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 8235.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 9,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "src/gdbmi/gdbmi_private.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 593,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								312,
-								312
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "src/gdbmi/gdbmi.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 722,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								273,
-								273
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 63.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 6,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "src/gdbmi/gdbmi.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 292,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								73,
-								73
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1729.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 6,
-					"file": "src/gdbmi/gdbmi_handlers.h",
+					"buffer": 2,
+					"file": "src/gui/guimanage.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2976,
+						"buffer_size": 7659,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								231,
-								231
+								4436,
+								4436
+							],
+							[
+								4524,
+								4524
+							],
+							[
+								4608,
+								4608
 							]
 						],
 						"settings":
@@ -1155,96 +1121,126 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"file": "src/gdbmi/gdbmi_handlers.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 7323,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								45,
-								45
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1575.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 8,
-					"file": "src/gdbmi/gdbmi_pipe.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3939,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								224,
-								224
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 423.0,
+						"translation.y": 1683.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 9,
-					"file": "gdb_doc/CommandsIndex.txt",
+					"buffer": 3,
+					"file": "src/gui/gui_codeview.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6368,
+						"buffer_size": 849,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								863,
-								863
+								178,
+								178
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "src/gui/gui_codeview.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3457,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3437,
+								3437
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1638.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "src/gui/gui_console.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 693,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								583,
+								583
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 126.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "src/gui/gui_console.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 543,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								527,
+								527
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
 					"type": "text"
 				}
 			]
@@ -1252,7 +1248,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 43.0
+		"height": 30.0
 	},
 	"input":
 	{
@@ -1285,6 +1281,10 @@
 	{
 		"height": 145.0
 	},
+	"output.SublimeLinter":
+	{
+		"height": 145.0
+	},
 	"output.Terminus":
 	{
 		"height": 149.0
@@ -1313,7 +1313,7 @@
 	"project": "gui.sublime-project",
 	"replace":
 	{
-		"height": 77.0
+		"height": 56.0
 	},
 	"save_all_on_build": false,
 	"select_file":
@@ -1337,7 +1337,7 @@
 		[
 			[
 				"",
-				"~/openwrt/REM/REM.sublime-project"
+				"~/code/super_res/super_res.sublime-project"
 			]
 		],
 		"width": 380.0
@@ -1375,7 +1375,7 @@
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 326.0,
+	"side_bar_width": 276.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

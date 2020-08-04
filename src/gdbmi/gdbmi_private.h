@@ -28,6 +28,7 @@ using std::pair;
 using std::deque;
 using std::thread;
 using std::mutex;
+using std::function;
 
 #ifndef GDBMI_TYPES
 typedef string 					ListItem;

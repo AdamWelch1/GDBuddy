@@ -25,6 +25,7 @@ using std::pair;
 using std::deque;
 using std::thread;
 using std::mutex;
+using std::function;
 
 typedef string 					ListItem;
 typedef vector<ListItem> 		ListItemVector;

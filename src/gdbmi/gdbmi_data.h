@@ -10,6 +10,15 @@ class GDBMI
 #endif
 	public:
 	
+		enum class UpdateType : uint64_t
+		{
+			FuncSymbols 	= (1 << 0),
+			GVarSymbols 	= (1 << 1),
+			Disassembly 	= (1 << 2),
+			RegisterInfo	= (1 << 3)
+		};
+		
+		typedef void (*NotifyCallback)(UpdateType updType, void *userData);
 		typedef pair<uint64_t, string> CurrentInstruction;
 		
 		struct SymbolObject
@@ -45,6 +54,14 @@ class GDBMI
 			StepFrame() { reset(); }
 		};
 		
+		struct RegisterInfo
+		{
+			string regName;
+			string regValue;
+			uint32_t regSize; // Size of register in bytes (rax = 8, eax = 4, etc)
+			bool updated = false;
+		};
+		
 	private:
 	
 		vector<SymbolObject> m_functionSymbols;
@@ -62,6 +79,14 @@ class GDBMI
 		StepFrame m_stepFrame;
 		mutex m_stepFrameMutex;
 		
+		NotifyCallback m_notifyCallback = 0;
+		void *m_notifyUserData = 0;
+		
+		mutex m_regNameListMutex;
+		vector<string> m_regNameList;
+		
+		mutex m_regValListMutex;
+		vector<RegisterInfo> m_regValList;
 		
 		void requestFunctionSymbols();
 		void requestGlobalVarSymbols();
@@ -70,12 +95,16 @@ class GDBMI
 		
 	public:
 	
+		void setNotifyCallback(NotifyCallback cbFunc, void *userData = 0)
+		{ m_notifyCallback = cbFunc; m_notifyUserData = userData; }
+		
 		void requestDisassembleAddr(string addr);
 		void requestDisassembleFunc(string func) { requestDisassembleAddr(func); }
 		void requestDisassembleLine(string file, string line);
 		
 		vector<SymbolObject> getFunctionSymbols();
 		vector<SymbolObject> getGlobalVarSymbols();
+		vector<RegisterInfo> getRegisters();
 		
 		CurrentInstruction getCurrentExecutionPos();
 		vector<DisassemblyInstruction> getDisassembly();

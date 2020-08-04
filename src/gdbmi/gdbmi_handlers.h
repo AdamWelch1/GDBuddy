@@ -221,22 +221,38 @@ class GDBMI
 	private:
 		void getDisassemblyCallback(GDBResponse resp);
 		
-		
+	public:
+		static void getregNamesCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->getregNamesCallback(resp); }
 		
 	private:
+		void getregNamesCallback(GDBResponse resp);
+		
+	public:
+		static void getregValsCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->getregValsCallback(resp); }
+		
+	private:
+		void getregValsCallback(GDBResponse resp);
+		
+		
+		
+		
+		
 		// Output handling stuff
+		
+	private:
+	
 		void sendCommand(string cmd);
 		mutex m_sendCmdMutex;
 		
-		// We use this to make sure we don't give out the same token
-		// twice in a short period of time
-		vector<uint32_t> m_recentTokens;
+		
 		uint32_t getToken()
 		{
 			m_randMutex.lock();
 			uint32_t ret = 0;
 			
-			while(true)
+			while(ret == 0)
 			{
 				if(m_randOffset >= (2048 - 3))
 				{
@@ -246,19 +262,6 @@ class GDBMI
 				
 				memcpy(&ret, (m_randPool + m_randOffset), 3);
 				m_randOffset += 3;
-				
-				bool isReused = false;
-				for(auto &i : m_recentTokens)
-				{
-					if(i == ret)
-					{
-						isReused = true;
-						break;
-					}
-				}
-				
-				if(!isReused)
-					break;
 			}
 			
 			m_randMutex.unlock();
@@ -278,15 +281,16 @@ class GDBMI
 		
 		bool fillRandPool()
 		{
-			FILE *fp = fopen("/def/urandom", "rb");
+			FILE *fp = fopen("/dev/urandom", "rb");
 			
 			if(fp != 0)
 			{
-				fread(m_randPool, 2048, 0, fp);
+				fread(m_randPool, 2048, 1, fp);
 				fclose(fp);
 				
 				return true;
 			}
+			else fprintf(stderr, "fopen(/dev/urandom, rb) failed!\n");
 			
 			return false;
 		}

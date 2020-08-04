@@ -7,31 +7,45 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "gdb_io.h"
+// #include "gdb_io.h"
 #include "gdbmi/gdbmi.h"
+#include "gui/guimanage.h"
 
-#include "imgui.h"
-#include "imgui_impl_sdl.h"
-#include "imgui_impl_opengl3.h"
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
+#include "imgui/imgui.h"
 
-using namespace ImGui;
-#define APP_FONT_SIZE			16
-#define APP_FONT_DEFAULT		"fonts/Anonymous Pro Minus.ttf"
-#define APP_FONT_BOLD			"fonts/Anonymous Pro Minus B.ttf"
-#define APP_FONT_ITALICS		"fonts/Anonymous Pro Minus I.ttf"
-#define APP_FONT_BOLDITALIC		"fonts/Anonymous Pro Minus BI.ttf"
+GDBMI *gdb = 0;
+GuiManager *gui = 0;
 
+void symbolTabPainter(string tabName, void *userData);
+void registerTabPainter(string tabName, void *userData);
 
 void signalHandler(int param)
 {
-	printf("Signal handler; param = %d\n", param);
+	switch(param)
+	{
+		case SIGINT:
+		{
+			fprintf(stderr, "Interrupt ^C caught; Exiting...\n");
+			
+			if(gui != 0)
+				gui->exit();
+		}
+		break;
+		
+		case SIGPIPE:
+		{
+		
+		}
+		break;
+	}
 }
 
 int main(int argc, char **argv)
 {
+	signal(SIGINT, signalHandler);
 	signal(SIGPIPE, signalHandler);
+	
+	gdb = new GDBMI;
 	
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
 	{
@@ -83,517 +97,288 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO &io = ImGui::GetIO();
-	io.IniFilename = 0;
-	ImFont *defaultFont [[maybe_unused]]	= io.Fonts->AddFontFromFileTTF(APP_FONT_DEFAULT, APP_FONT_SIZE);
-	ImFont *boldFont [[maybe_unused]]		= io.Fonts->AddFontFromFileTTF(APP_FONT_BOLD, APP_FONT_SIZE);
-	ImFont *italicFont [[maybe_unused]]		= io.Fonts->AddFontFromFileTTF(APP_FONT_ITALICS, APP_FONT_SIZE);
-	ImFont *boldItalicFont [[maybe_unused]]	= io.Fonts->AddFontFromFileTTF(APP_FONT_BOLDITALIC, APP_FONT_SIZE);
-	// (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	gui = new GuiManager(window, &gl_context);
 	
+	GuiTabPanel leftPanel("SymbolsPanel", 0.2f, 0.6f);
+	leftPanel.addTab("Local Func", symbolTabPainter);
+	leftPanel.addTab("Imports", symbolTabPainter);
+	leftPanel.addTab("Global Vars", symbolTabPainter);
+	leftPanel.setSameLine(false);
 	
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	GuiTabPanel rightPanel("InferiorInfoPanel", 0.2f, 0.6f);
+	rightPanel.addTab("Registers", registerTabPainter);
+	rightPanel.addTab("Local Vars", 0);
+	rightPanel.setSameLine(true);
 	
-	// Setup Platform/Renderer bindings
-	ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-	ImGui_ImplOpenGL3_Init(glsl_version);
+	GuiCodeView codeView(0.6f, 0.6f);
+	codeView.setFonts(gui->getDefaultFont(), gui->getBoldFont(), gui->getItalicFont(), gui->getBoldItalicFont());
+	codeView.setSameLine(true);
 	
-	int32_t winSize_w, winSize_h;
-	SDL_GetWindowSize(window, &winSize_w, &winSize_h);
-	SDL_SetWindowPosition(window, 0, 0);
+	GuiToolbar toolbar;
+	toolbar.setStatusCB([&]() -> string { return gdb->getStatusMsg(); });
 	
-	char *consoleBuf = 0;
-	uint32_t consoleAlloc = 0;
-	const uint32_t ALLOC_SIZE = 16 * 1024; // Our console buffer will grow in 16kb increments
-	
-	if(consoleBuf == 0) // Allocate console buffer
+	// Set up toolbar buttons
 	{
-		consoleBuf = (char *) calloc(1, ALLOC_SIZE);
-		consoleAlloc = ALLOC_SIZE;
+		using ExecCmd = GDBMI::ExecCmd;
+		ButtonInfo button;
+		button.text = "Run";
+		button.tooltip = "Run program from the beginning";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Run); };
+		toolbar.addButton(button), button.onClick = 0;
 		
-		if(consoleBuf == 0)
-		{
-			printf("Failed to allocate memory for console!\n");
-			fflush(stdout);
-			abort();
-		}
+		button.text = "Pause";
+		button.tooltip = "Interrupt program execution";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Interrupt); };
+		toolbar.addButton(button), button.onClick = 0;
+		
+		button.text = "Continue";
+		button.tooltip = "Continue program execution";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Continue); };
+		toolbar.addButton(button), button.onClick = 0;
+		
+		button.text = "Step over line";
+		button.tooltip = "Step over source line";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Next); };
+		toolbar.addButton(button), button.onClick = 0;
+		
+		button.text = "Step line";
+		button.tooltip = "Step source line";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Step); };
+		toolbar.addButton(button), button.onClick = 0;
+		
+		button.text = "Step over inst";
+		button.tooltip = "Step over instruction";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::NextInstruction); };
+		toolbar.addButton(button), button.onClick = 0;
+		
+		button.text = "Step inst";
+		button.tooltip = "Step instruction";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::StepInstruction); };
+		toolbar.addButton(button), button.onClick = 0;
+		
+		button.text = "Finish exec";
+		button.tooltip = "Execute until current function returns";
+		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Finish); };
+		toolbar.addButton(button), button.onClick = 0;
 	}
 	
-	auto consoleBufResize = [&]() -> uint32_t
+	
+	
+	GuiConsole console(1.0, 0.31);
+	
+	auto logUpdateCB = [&](GDBMI * dbg)
 	{
-		consoleAlloc += ALLOC_SIZE;
-		consoleBuf = (char *) realloc(consoleBuf, consoleAlloc);
+		deque<GDBMI::LogItem> logs = dbg->getLogs();
 		
-		if(consoleBuf == 0)
+		auto MakeColor = [&](uint32_t r, uint32_t g, uint32_t b) -> ImVec4
 		{
-			printf("Failed to reallocate memory for console!\n");
-			fflush(stdout);
-			abort();
+			return ImVec4(
+				static_cast<float>(r) / 255.0,
+				static_cast<float>(g) / 255.0,
+				static_cast<float>(b) / 255.0,
+				1.0
+			);
+		};
+		
+		vector<ConsoleItem> tmpList;
+		for(auto &log : logs)
+		{
+			ConsoleItem tmp;
+			tmp.tag = log.label;
+			tmp.text = log.logText;
+			
+			using LogLevel = GDBMI::LogLevel;
+			switch(log.logLevel)
+			{
+				// *INDENT-OFF*
+				case LogLevel::NeedsFix: tmp.tagColor = MakeColor(255, 52, 52); break;
+				case LogLevel::Error: 	 tmp.tagColor = MakeColor(255, 52, 52); break;
+				case LogLevel::Warn: 	 tmp.tagColor = MakeColor(255, 145, 48); break;
+				case LogLevel::Info: 	 tmp.tagColor = MakeColor(255, 255, 255); break;
+				case LogLevel::Verbose:  tmp.tagColor = MakeColor(77, 255, 39); break;
+				case LogLevel::Debug: 	 tmp.tagColor = MakeColor(38, 127, 255); break;
+				// *INDENT-ON*
+			}
+			
+			tmpList.push_back(tmp);
 		}
 		
-		return consoleAlloc;
+		console.clear();
+		console.addItems(tmpList);
 	};
 	
+	gdb->setLogUpdateCB(logUpdateCB);
 	
-	GDBMI gdb;
-	gdb.doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/home/aj/code/test/main");
-	// gdb.doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/usr/bin/galculator");
-	
-	
-	// GDBIO gdb(gdbRead, gdbWrite);
-	//gdb.setConsole(consoleBuf, consoleAlloc, consoleBufResize);
-	
-	usleep(300 * 1000);
-	
-	//gdb.loadInferior("/home/aj/code/mandelbrot/main");
-	// //gdb.loadInferior("/usr/bin/galculator");
-	//gdb.sendCmd("-gdb-set disassembly-flavor intel\n");
-	
-	float addrColor[4] = {0.000f, 0.748f, 0.856f, 1.000f};
-	float instColor[4] = {0.879f, 0.613f, 0.000f, 1.000f};
-	float colorHover[4] = {(45.0 / 255.0), (78.0 / 255.0), (106 / 255.0), 1.0};
-	float colorColHeader[4] = {0.118f, 0.139f, 0.209f, 1.000f}; // Column header color
-	PushStyleColor(ImGuiCol_ChildBg, (ImVec4) ImColor(40, 41, 35));
-	PushStyleColor(ImGuiCol_FrameBg, (ImVec4) ImColor(40, 41, 35));
-	PushStyleColor(ImGuiCol_Header, (ImVec4) ImColor(56, 56, 48));
-	PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(colorHover));
-	
-	bool exitProgram = false;
-	while(!exitProgram)
-	{
-		SDL_Event event;
-		while(SDL_PollEvent(&event))
-		{
-			ImGui_ImplSDL2_ProcessEvent(&event);
-			if(event.type == SDL_QUIT)
-				exitProgram = true;
-				
-			if(event.type == SDL_WINDOWEVENT &&
-					event.window.event == SDL_WINDOWEVENT_CLOSE &&
-					event.window.windowID == SDL_GetWindowID(window))
-				exitProgram = true;
-		}
-		
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame(window);
-		ImGui::NewFrame();
-		
-		// Set up MainAppWindow parameters
-		ImVec2 mwSize = {(float) winSize_w, (float) winSize_h};
-		ImGui::SetNextWindowSize(mwSize);
-		ImGui::SetNextWindowPos({0, 0});
-		
-		ImGuiWindowFlags_ mainWindowFlags = (ImGuiWindowFlags_)
-											(ImGuiWindowFlags_NoTitleBar |
-											 ImGuiWindowFlags_NoResize |
-											 ImGuiWindowFlags_NoMove |
-											 ImGuiWindowFlags_MenuBar |
-											 ImGuiWindowFlags_NoSavedSettings);
-											 
-		ImGui::Begin("MainAppWindow", 0, mainWindowFlags);
-		
-		// Main window menu bar
-		if(ImGui::BeginMenuBar())
-		{
-			if(ImGui::BeginMenu("File"))
-			{
-				ImGui::MenuItem("Open...");
-				if(ImGui::IsItemHovered())
-					ImGui::SetTooltip("Open an executable file");
-					
-				ImGui::MenuItem("Exit");
-				if(ImGui::IsItemClicked())
-					exitProgram = true;
-					
-				ImGui::EndMenu();
-			}
-			
-			ImGui::EndMenuBar();
-		}
-		
-		GDBMI::GDBState gdbState = gdb.getState();
-		// Toolbar
-		BeginGroup();
-		{
-			ImVec2 buttonSize = {0, 0};
-			
-			Button("Run", buttonSize);
-			SameLine();
-			
-			if(IsItemClicked())
-				gdb.doExecCommand(GDBMI::ExecCmd::Run);
-				
-			if(gdb.getState() == GDBMI::GDBState::Stopped)
-			{
-				Button("Cont", buttonSize);
-				
-				if(IsItemClicked())
-					gdb.doExecCommand(GDBMI::ExecCmd::Continue);
-					
-			}
-			else if(gdb.getState() == GDBMI::GDBState::Running)
-			{
-				Button("Pause", buttonSize);
-				if(IsItemClicked())
-					gdb.doExecCommand(GDBMI::ExecCmd::Interrupt);
-					
-			}
-			
-			SameLine();
-			Button("Stop", buttonSize);
-			SameLine();
-			Button("Step", buttonSize);
-			SameLine();
-			
-			if(IsItemClicked())
-				gdb.doExecCommand(GDBMI::ExecCmd::Step);
-				
-			Button("Step Inst", buttonSize);
-			SameLine();
-			
-			if(IsItemClicked())
-				gdb.doExecCommand(GDBMI::ExecCmd::StepInstruction);
-				
-			Button("Step Over", buttonSize);
-			SameLine();
-			
-			if(IsItemClicked())
-				gdb.doExecCommand(GDBMI::ExecCmd::Next);
-				
-			Button("Step Over Inst", buttonSize);
-			SameLine();
-			
-			if(IsItemClicked())
-				gdb.doExecCommand(GDBMI::ExecCmd::NextInstruction);
-				
-			Text(gdb.getStatusMsg().c_str());
-			Separator();
-		}
-		EndGroup();
-		
-		ImVec2 availSize = GetContentRegionAvail();
-		if(BeginChild("SymbolsPane", {availSize.x * 0.2, availSize.y * 0.6 }, true))
-		{
-			static ImGuiTabBarFlags_ tabFlags = (ImGuiTabBarFlags_)
-												(ImGuiTabBarFlags_Reorderable |
-												 ImGuiTabBarFlags_NoCloseWithMiddleMouseButton |
-												 ImGuiTabBarFlags_FittingPolicyScroll);
-												 
-			if(BeginTabBar("SymbolsTabList", tabFlags))
-			{
-				vector<GDBMI::SymbolObject> funcList = gdb.getFunctionSymbols();
-				GDBMI::CurrentInstruction curPos = gdb.getCurrentExecutionPos();
-				
-				if(BeginTabItem("Functions"))
-				{
-					static std::string selectedFunc = "";
-					for(uint32_t i = 0; i < funcList.size(); i++)
-					{
-						// TODO: Fix this ghetto-ass method of checking for external symbols
-						if(funcList[i].fullPath.find("/include/") != std::string::npos)
-							continue;
-							
-						bool funcIsActive = false;
-						if(curPos.second.length() > 0 && funcList[i].name.find(curPos.second) != string::npos)
-							funcIsActive = true;
-							
-						if(funcIsActive)
-							PushFont(boldFont);
-							
-						string itemText = funcList[i].description;
-						if(Selectable(itemText.c_str(), (selectedFunc == itemText)))
-							selectedFunc = itemText;
-							
-						if(funcIsActive)
-							PopFont();
-							
-						if(IsItemHovered())
-							SetTooltip(itemText.c_str());
-							
-						if(IsItemClicked())
-						{
-							// std::string tmpstr = "-f ";
-							// tmpstr += (funcList[i].shortName + " -l ") + funcList[i].lineNumber;
-							// size_t pos = tmpstr.find_last_of("/");
-							// tmpstr = tmpstr.substr(pos + 1);
-							// tmpstr.insert(tmpstr.begin(), '"');
-							// tmpstr.insert(tmpstr.end(), '"');
-							
-							gdb.requestDisassembleLine(funcList[i].shortName, funcList[i].lineNumber);
-						}
-					}
-					
-					//gdb.unlockSymbols();
-					
-					EndTabItem();
-				}
-				
-				if(BeginTabItem("Imports"))
-				{
-					static std::string selectedFunc = "";
-					for(uint32_t i = 0; i < funcList.size(); i++)
-					{
-						// TODO: Fix this ghetto-ass method of checking for external symbols
-						if(funcList[i].fullPath.find("/include/") == std::string::npos)
-							continue;
-							
-						bool funcIsActive = false;
-						if(curPos.second.length() > 0 && funcList[i].name.find(curPos.second) != string::npos)
-							funcIsActive = true;
-							
-						if(funcIsActive)
-							PushFont(boldFont);
-							
-						string itemText = funcList[i].description;
-						if(Selectable(itemText.c_str(), (selectedFunc == itemText)))
-							selectedFunc = itemText;
-							
-						if(funcIsActive)
-							PopFont();
-							
-						if(IsItemHovered())
-							SetTooltip(itemText.c_str());
-							
-						if(IsItemClicked())
-						{
-							// std::string tmpstr = "-f ";
-							// tmpstr += (funcList[i].shortName + " -l ") + item.first;
-							// size_t pos = tmpstr.find_last_of("/");
-							// tmpstr = tmpstr.substr(pos + 1);
-							// tmpstr.insert(tmpstr.begin(), '"');
-							// tmpstr.insert(tmpstr.end(), '"');
-							
-							//gdb.showDisassembly(tmpstr);
-						}
-					}
-					
-					EndTabItem();
-				}
-				
-				EndTabBar();
-			}
-			
-		}
-		EndChild();
-		SameLine();
-		
-		PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0, 0.0));
-		PushStyleColor(ImGuiCol_ChildBg, ImVec4(colorColHeader));
-		if(BeginChild("CodeViewPane", {availSize.x * 0.6, availSize.y * 0.6}, true))
-		{
-			static uint64_t selectedInstr = 0;
-			//gdb.lockCodeView();
-			// std::vector<DisasLineInfo> disasLines;// = //gdb.getDisassmemblyLines();
-			vector<GDBMI::DisassemblyInstruction> disasLines = gdb.getDisassembly();
-			GDBMI::CurrentInstruction curPos = gdb.getCurrentExecutionPos();
-			GDBMI::StepFrame stepFrame = gdb.getStepFrame();
-			static uint64_t lastPC = 0;
-			
-			if(disasLines.size() > 0)
-			{
-				ImFont *tmpFont = GetFont();
-				ImVec2 strSize = tmpFont->CalcTextSizeA(APP_FONT_SIZE, FLT_MAX, FLT_MAX, disasLines[0].addrStr.c_str());
-				// printf("strSize = %f, %f\n", strSize.x, strSize.y);
-				
-				float winWidth = GetWindowWidth();
-				float adj = (10.0 - strSize.x + 3.0) / winWidth;
-				PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(adj, 0));
-				
-				// This adds some space above the column headers
-				{
-					PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0, -10.0));
-					Columns(3);
-					SetColumnWidth(-1, 150.0);
-					SetColumnWidth(1, 200.0);
-					
-					NextColumn();
-					Text(" ");
-					NextColumn();
-					Text(" ");
-					NextColumn();
-					Text(" ");
-					
-					PopStyleVar(1);
-				}
-				
-				NextColumn();
-				PushFont(boldFont);
-				Text("Address");
-				NextColumn();
-				Text("Instruction");
-				PopFont();
-				NextColumn();
-				PopStyleColor(1);
-				Columns(1);
-				
-				PushStyleVar(ImGuiStyleVar_ChildBorderSize, (float) 0.0);
-				
-				if(BeginChild("DisassemblyInstructionList", ImVec2(0, 0), false, 0))
-				{
-					uint32_t lineCtr = 0;
-					Columns(3);
-					Separator();
-					SetColumnWidth(-1, 150.0);
-					SetColumnWidth(1, 200.0);
-					for(auto &disLine : disasLines)
-					{
-						NextColumn();
-						bool selItem = (selectedInstr == disLine.address);
-						// Text(disLine.addr.c_str());
-						
-						bool instIsPC = false;
-						if(stepFrame.isValid)
-						{
-							if(stepFrame.address == disLine.addrStr)
-								instIsPC = true;
-						}
-						else
-						{
-							// Is this instruction pointed to by the program counter, $pc (ex. eip, rip)
-							if(curPos.first == disLine.address)
-								instIsPC = true;
-						}
-						
-						if(selItem)
-							PushFont(boldFont);
-							
-						PushStyleColor(ImGuiCol_Text, ImVec4(addrColor));
-						Selectable(disLine.addrStr.c_str(), selItem, ImGuiSelectableFlags_SpanAllColumns);
-						PopStyleColor(1);
-						
-						// if(lastPC != curPos.first)
-						{
-							// lastPC = curPos.first;
-							// SetScrollHereY(0.5);
-							float curLine = static_cast<float>(lineCtr);
-							float numLines = static_cast<float>(disasLines.size());
-							float yPct = curLine / numLines;
-							SetScrollY(GetScrollMaxY() - (yPct * GetScrollMaxY()));
-						}
-						lineCtr++;
-						
-						if(IsItemClicked())
-							selectedInstr = disLine.address;
-							
-						NextColumn();
-						if(instIsPC)
-							PushStyleColor(ImGuiCol_Text, ImVec4(instColor));
-						Text(disLine.instruction.c_str());
-						if(instIsPC)
-							PopStyleColor(1);
-						NextColumn();
-						
-						if(selItem)
-							PopFont();
-					}
-				}
-				EndChild();
-				
-				PopStyleVar(2);
-			}
-			else
-				PopStyleColor(1);
-				
-			//gdb.unlockCodeView();
-		}
-		else
-			PopStyleColor(1);
-		EndChild();
-		
-		PopStyleVar(1);
-		// SameLine();
-		
-		PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0);
-		availSize = GetContentRegionAvail();
-		availSize.y -= 60.0;
-		
-		PushTextWrapPos(availSize.x * 0.8);
-		static string lastLI = "";
-		deque<GDBMI::LogItem> logs = gdb.getLogs();
-		if(BeginChild("ConsoleOutput", availSize, true, 0))
-		{
-			for(auto &iter : logs)
-			{
-				Selectable(iter.logText.c_str());
-				if(iter.logText == (logs.end() - 1)->logText)
-					SetScrollHereY(1.0);
-			}
-		}
-		EndChild();
-		PopTextWrapPos();
-		
-		PopStyleVar(1);
-		
-		
-		//gdb.lockConsole();
-		/*
-			InputTextMultiline("Console", consoleBuf, consoleAlloc, availSize,
-							   (ImGuiInputTextFlags_ReadOnly |
-								ImGuiInputTextFlags_NoHorizontalScroll), 0, 0, false);//gdb.wasConsoleUpdated());
-			//gdb.unlockConsole();
-		
-			static bool inputClear = false;
-			static char inputBuf[1024 * 32] = {0};
-		
-			if(!inputClear)
-			{
-				inputClear = true;
-				memset(inputBuf, 0, (1024 * 32));
-				SetNextWindowFocus();
-				SetKeyboardFocusHere();
-			}
-		
-		
-			if(InputText("ConsoleCmd", inputBuf, (1024 * 32), (ImGuiInputTextFlags_EnterReturnsTrue)))
-			{
-				SetKeyboardFocusHere(-1);
-				SetWindowFocus("ConsoleCmd");
-				std::string inBuf = inputBuf;
-				inBuf += "\n";
-				//gdb.sendCmd(inBuf);
-				memset(inputBuf, 0, (1024 * 32));
-			}
-		*/
-		
-		//PopStyleVar(1);
-		
-		// ImGuiColorEditFlags_ ceFlags = (ImGuiColorEditFlags_)
-		// 							   (ImGuiColorEditFlags_NoAlpha |
-		// 								ImGuiColorEditFlags_InputRGB |
-		// 								ImGuiColorEditFlags_PickerHueBar
-		// 							   );
-		// SetNextItemWidth(200.0);
-		// ColorEdit4("Addr color", addrColor, ceFlags);
-		// ColorEdit4("Inst color", instColor, ceFlags);
-		
-		
-		ImGui::End();
-		
-		ImGui::Render();
-		glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-		glClear(GL_COLOR_BUFFER_BIT);
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		SDL_GL_SwapWindow(window);
-	}
-	
-	PopStyleColor(3);
+	gui->addChild(&toolbar);
+	gui->addChild(&leftPanel);
+	gui->addChild(&codeView);
+	gui->addChild(&rightPanel);
+	gui->addChild(&console);
 	
 	
-	// Cleanup
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
 	
-	SDL_GL_DeleteContext(gl_context);
-	SDL_DestroyWindow(window);
-	SDL_Quit();
+	gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/home/aj/code/huffman/main");
+	gui->run();
+	
+	
+	
+	delete gui;
+	delete gdb;
 	
 	return 0;
+}
+
+void symbolTabPainter(string tabName, void *userData)
+{
+	if(tabName == "Local Func" || tabName == "Imports")
+	{
+		mutex &funcListMutex = gui->getFuncListMutex();
+		
+		funcListMutex.lock();
+		const vector<GDBMI::SymbolObject> &funcList = gui->getFuncList();
+		GDBMI::CurrentInstruction curPos = gdb->getCurrentExecutionPos();
+		
+		static std::string selectedFunc = "";
+		for(uint32_t i = 0; i < funcList.size(); i++)
+		{
+			// TODO: Fix this cheap-ass method of checking for external symbols
+			if(tabName == "Imports")
+			{
+				if(funcList[i].fullPath.find("/include/") == std::string::npos)
+					continue;
+			}
+			else
+			{
+				if(funcList[i].fullPath.find("/include/") != std::string::npos)
+					continue;
+			}
+			
+			bool funcIsActive = false;
+			if(curPos.second.length() > 0 && funcList[i].name.find(curPos.second) != string::npos)
+				funcIsActive = true;
+				
+			if(funcIsActive)
+				PushFont(gui->getBoldFont());
+				
+			string itemText = funcList[i].description;
+			if(Selectable(itemText.c_str(), (selectedFunc == itemText)))
+				selectedFunc = itemText;
+				
+			if(funcIsActive)
+				PopFont();
+				
+			if(IsItemHovered())
+				SetTooltip("%s", itemText.c_str());
+				
+			if(IsItemClicked())
+			{
+				//
+				gdb->requestDisassembleLine(funcList[i].shortName, funcList[i].lineNumber);
+			}
+		}
+		
+		funcListMutex.unlock();
+		
+	}
+	else if(tabName == "Global Vars")
+	{
+		mutex &gvarMutex = gui->getGlobVarListMtx();
+		
+		gvarMutex.lock();
+		vector<GDBMI::SymbolObject> &gvarList = gui->getGlobVarList();
+		
+		static std::string selectedVar = "";
+		for(uint32_t i = 0; i < gvarList.size(); i++)
+		{
+			// if(gvarList[i].fullPath.find("/include/") == std::string::npos)
+			// continue;
+			
+			string itemText = gvarList[i].description;
+			if(Selectable(itemText.c_str(), (selectedVar == itemText)))
+				selectedVar = itemText;
+				
+			if(IsItemHovered())
+				SetTooltip("%s", itemText.c_str());
+				
+			if(IsItemClicked())
+			{
+				// TODO: Handle click input on global variable list
+				//
+			}
+		}
+		
+		gvarMutex.unlock();
+	}
+}
+
+void registerTabPainter(string tabName, void *userData)
+{
+	// TODO: This function is going to need to be able to handle multiple architectures
+	
+	mutex &regMutex = gui->getRegListMutex();
+	vector<GDBMI::RegisterInfo> &regList = gui->getRegList();
+	
+	vector<string> generalRegisters =
+	{
+		"rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rsp", "rip", "eflags"
+	};
+	
+	auto isGenReg = [&](string & r) -> bool
+	{
+		for(auto &genreg : generalRegisters)
+		{
+			if(genreg == r)
+				return true;
+		}
+		
+		return false;
+	};
+	
+	ImFont *boldFont = gui->getBoldFont();
+	Columns(2);
+	
+	ImVec4 ripColor = gui->getColor(GuiItem::RegisterProgCtr);
+	ImVec4 chgColor = gui->getColor(GuiItem::RegisterValChg);
+	
+	regMutex.lock();
+	for(auto &reg : regList)
+	{
+		if(isGenReg(reg.regName))
+		{
+			SetColumnWidth(-1, 90.0);
+			PushFont(boldFont);
+			
+			Text(reg.regName.c_str());
+			
+			PopFont();
+			NextColumn();
+			
+			if(reg.regName == "rip")
+			{
+				PushStyleColor(ImGuiCol_Text, ripColor);
+				
+				Text(reg.regValue.c_str());
+				
+				PopStyleColor(1);
+			}
+			else if(reg.updated == true)
+			{
+				PushStyleColor(ImGuiCol_Text, chgColor);
+				PushFont(boldFont);
+				
+				Text(reg.regValue.c_str());
+				
+				PopFont();
+				PopStyleColor(1);
+			}
+			else
+				Text(reg.regValue.c_str());
+				
+			Separator();
+			NextColumn();
+		}
+	}
+	
+	regMutex.unlock();
+	Columns(1);
 }

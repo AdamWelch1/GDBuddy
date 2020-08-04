@@ -51,7 +51,9 @@ enum class GuiItem : uint32_t
 	CodeViewBackground,
 	
 	RegisterProgCtr,
-	RegisterValChg
+	RegisterValChg,
+	
+	ActiveFrame
 };
 
 struct Printable

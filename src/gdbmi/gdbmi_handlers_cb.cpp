@@ -22,11 +22,13 @@ void GDBMI::stoppedCallback(GDBResponse resp)
 		logPrintf(LogLevel::Debug, "stoppedCallback() error\n");
 		
 		
-	sendCommand("-stack-list-variables 1");
+	string cmdToken = getTokenStr();
+	registerCallback(cmdToken, GDBMI::getregValsCallbackThunk);
+	sendCommand(cmdToken + "-data-list-register-values x");
 	
-	string regToken = getTokenStr();
-	registerCallback(regToken, GDBMI::getregValsCallbackThunk);
-	sendCommand(regToken + "-data-list-register-values x");
+	cmdToken = getTokenStr();
+	registerCallback(cmdToken, GDBMI::getStackFramesCallbackThunk);
+	sendCommand(cmdToken + "-stack-list-frames");
 	
 	string respData = resp.recordData;
 	KVPair rootPair = parserGetKVPair(respData);
@@ -40,10 +42,11 @@ void GDBMI::stoppedCallback(GDBResponse resp)
 			requestCurrentExecPos();
 			requestDisassembleAddr("$pc");
 			
+			// Here we're calling a callback for breakpoint-hit events
 			CallbackIter cbIter;
 			if(findCallback(rootPair.second, cbIter) == true)
 			{
-				cbIter->second(this, resp);
+				cbIter->second.second(this, resp);
 				return;
 			}
 		}
@@ -98,12 +101,11 @@ void GDBMI::stoppedCallback(GDBResponse resp)
 		}
 		
 		// Hopefully, this is a catch-all for all exit events
-		if(rootPair.second.find("exited-") == string::npos)
+		if(rootPair.second.find("exited-") != string::npos)
 		{
 			setState(GDBState::Exited, "Inferior exited: Reason unknown");
 			//
 		}
-		
 		
 		
 		logPrintf(LogLevel::Debug, "Stop data: %s\n", resp.recordData.c_str());
@@ -628,4 +630,167 @@ void GDBMI::getregValsCallback(GDBResponse resp)
 		
 	if(m_notifyCallback != 0)
 		m_notifyCallback(UpdateType::RegisterInfo, m_notifyUserData);
+}
+
+void GDBMI::getStackFramesCallback(GDBResponse resp)
+{
+	if(resp.recordData.length() > 0)
+	{
+		string frameList = resp.recordData;
+		KVPair rootKVP = parserGetKVPair(frameList);
+		
+		if(rootKVP.first == "stack")
+		{
+			string list = rootKVP.second;
+			if(list[0] == '[')
+				list.erase(list.begin());
+				
+			if(list.back() == ']')
+				list.pop_back();
+				
+			KVPairVector frames;
+			parserGetKVPairs(list, frames);
+			
+			m_backtraceMutex.lock();
+			// m_backtrace.clear();
+			vector<FrameInfo> newBacktrace;
+			
+			for(auto &frame : frames)
+			{
+				if(frame.first != "frame")
+				{
+					logPrintf(LogLevel::Error, "getStackFramesCallback():%u - Unrecognized key value '%s'",
+							  __LINE__, frame.first.c_str());
+							  
+					continue;
+				}
+				
+				string attrList = parserGetTuple(frame.second);
+				FrameInfo tmp;
+				
+				while(attrList.length() > 1)
+				{
+					KVPair attr = parserGetKVPair(attrList);
+					
+					if(attr.first == "level")
+						tmp.level = strtoul(attr.second.c_str(), 0, 10);
+					else if(attr.first == "addr")
+						tmp.addr = attr.second;
+					else if(attr.first == "func")
+						tmp.func = attr.second;
+					else if(attr.first == "file")
+						tmp.file = attr.second;
+					else if(attr.first == "fullname")
+						tmp.fullname = attr.second;
+					else if(attr.first == "line")
+						tmp.line = strtoul(attr.second.c_str(), 0, 10);
+					else if(attr.first == "arch")
+						tmp.arch = attr.second;
+				}
+				
+				newBacktrace.push_back(tmp);
+			}
+			
+			
+			// Copy the frame variable data over to the new backtrace
+			for(auto &bt : newBacktrace)
+			{
+				for(auto &oldbt : m_backtrace)
+				{
+					if(bt.fullname == oldbt.fullname &&
+							bt.func == oldbt.func &&
+							bt.line == oldbt.line)
+					{
+						bt.vars = oldbt.vars;
+						break;
+					}
+				}
+			}
+			
+			m_backtrace.swap(newBacktrace);
+			
+			char cmdStr[1024] = {0};
+			string cmdToken = getTokenStr();
+			registerCallback(cmdToken, GDBMI::getStackVarsCallbackThunk);
+			sprintf(cmdStr, "%s-stack-list-variables 2", cmdToken.c_str());
+			sendCommand(cmdStr);
+			
+			m_backtraceMutex.unlock();
+		}
+	}
+	else
+	{
+		m_backtraceMutex.lock();
+		m_backtrace.clear();
+		m_backtraceMutex.unlock();
+	}
+	
+	CallbackIter cb;
+	if(findCallback(resp.recordToken, cb) == true)
+		eraseCallback(cb);
+		
+	if(m_notifyCallback != 0)
+		m_notifyCallback(UpdateType::Backtrace, m_notifyUserData);
+}
+
+void GDBMI::getStackVarsCallback(GDBResponse resp)
+{
+	if(resp.recordData.length() > 0)
+	{
+		string stackVarList = resp.recordData;
+		KVPair rootKVP = parserGetKVPair(stackVarList);
+		
+		// variables=[{name="argc",arg="1",type="int",value="1"},{name="argv",arg="1",type="char **",value="0x7fffffffe178"},{name="fileBuffer",type="uint8_t *",value="0x0"},{name="fileSize",type="uint32_t",value="21845"},{name="hm",type="Huffman"},{name="cSize",type="uint32_t",value="1431654928"},{name="cData",type="uint8_t *",value="0x555555558250 <__libc_csu_init> \"AWAVA\\211\\377AUATL\\215%F+ \""}]
+		
+		if(rootKVP.first == "variables")
+		{
+			string varList = rootKVP.second;
+			
+			if(varList[0] == '[')
+				varList.erase(varList.begin());
+				
+			if(varList.back() == ']')
+				varList.pop_back();
+				
+			m_backtraceMutex.lock();
+			
+			if(m_backtrace.size() > 0)
+				m_backtrace[0].vars.clear();
+				
+			while(varList.length() > 1)
+			{
+				string var = parserGetTuple(varList);
+				
+				KVPairVector varAttrs;
+				parserGetKVPairs(var, varAttrs);
+				
+				FrameVariable tmp;
+				tmp.isArg = false;
+				
+				for(auto &attr : varAttrs)
+				{
+					if(attr.first == "name")
+						tmp.name = attr.second;
+					else if(attr.first == "arg")
+						tmp.isArg = true;
+					else if(attr.first == "type")
+						tmp.type = attr.second;
+					else if(attr.first == "value")
+						tmp.value = attr.second;
+				}
+				
+				if(m_backtrace.size() > 0)
+					m_backtrace[0].vars.push_back(tmp);
+			}
+			
+			m_backtraceMutex.unlock();
+		}
+	}
+	
+	CallbackIter cb;
+	if(findCallback(resp.recordToken, cb) == true)
+		eraseCallback(cb);
+		
+	if(m_notifyCallback != 0)
+		m_notifyCallback(UpdateType::Backtrace, m_notifyUserData);
 }

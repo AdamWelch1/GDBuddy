@@ -18,6 +18,7 @@ GuiManager *gui = 0;
 
 void symbolTabPainter(string tabName, void *userData);
 void registerTabPainter(string tabName, void *userData);
+void backtraceTabPainter(string tabname, void *userData);
 
 void signalHandler(int param)
 {
@@ -162,9 +163,12 @@ int main(int argc, char **argv)
 		toolbar.addButton(button), button.onClick = 0;
 	}
 	
+	GuiTabPanel stackPanel("StackPanel", 0.35, 0.33);
+	stackPanel.setSameLine(true);
+	stackPanel.addTab("Backtrace", backtraceTabPainter);
+	stackPanel.addTab("Stack dump", 0);
 	
-	
-	GuiConsole console(1.0, 0.31);
+	GuiConsole console(0.65, 0.33);
 	
 	auto logUpdateCB = [&](GDBMI * dbg)
 	{
@@ -214,6 +218,7 @@ int main(int argc, char **argv)
 	gui->addChild(&codeView);
 	gui->addChild(&rightPanel);
 	gui->addChild(&console);
+	gui->addChild(&stackPanel);
 	
 	
 	
@@ -381,4 +386,91 @@ void registerTabPainter(string tabName, void *userData)
 	
 	regMutex.unlock();
 	Columns(1);
+}
+
+void backtraceTabPainter(string tabname, void *userData)
+{
+	mutex &btMutex = gui->getBacktraceMutex();
+	
+	ImFont *boldFont = gui->getBoldFont();
+	ImFont *boldItalicFont = gui->getBoldItalicFont();
+	
+	// Column headers
+	Columns(4);
+	SetColumnWidth(0, 80);
+	SetColumnWidth(1, 300);
+	SetColumnWidth(2, 200);
+	SetColumnWidth(3, 80);
+	
+	PushFont(boldFont);
+	Text("Frame #");
+	NextColumn();
+	Text("Function");
+	NextColumn();
+	Text("File");
+	NextColumn();
+	Text("Line #");
+	NextColumn();
+	Separator();
+	PopFont();
+	
+	btMutex.lock();
+	
+	vector<GDBMI::FrameInfo> &backtrace = gui->getBacktrace();
+	for(auto &frame : backtrace)
+	{
+		// PushStyleColor(ImGuiCol_Header, gui->getColor(GuiItem::ActiveFrame));
+		
+		char lvl[16] = {0};
+		sprintf(lvl, "%u", frame.level);
+		Selectable(lvl, true, ImGuiSelectableFlags_SpanAllColumns);
+		NextColumn();
+		
+		// PopStyleColor(1);
+		
+		Text(frame.func.c_str());
+		NextColumn();
+		
+		Text(frame.file.c_str());
+		NextColumn();
+		
+		char lineNum[64] = {0};
+		sprintf(lineNum, "%u", frame.line);
+		Text(lineNum);
+		Separator();
+		NextColumn();
+		
+		if(frame.vars.size() > 0)
+		{
+			Columns(2);
+			SetColumnWidth(0, 80);
+			
+			
+			for(auto &var : frame.vars)
+			{
+				Selectable(" ", false, ImGuiSelectableFlags_SpanAllColumns);
+				NextColumn();
+				
+				char varStr[1024] = {0};
+				sprintf(varStr, "%s %s = %s",
+						var.type.c_str(),
+						var.name.c_str(),
+						var.value.c_str());
+						
+				Text(varStr);
+				
+				Separator();
+				NextColumn();
+				
+			}
+			
+			Columns(4);
+			SetColumnWidth(0, 80);
+			SetColumnWidth(1, 300);
+			SetColumnWidth(2, 200);
+			SetColumnWidth(3, 80);
+		}
+	}
+	
+	btMutex.unlock();
 }

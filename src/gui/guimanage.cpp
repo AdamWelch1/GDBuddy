@@ -64,6 +64,7 @@ GuiManager::GuiManager(SDL_Window *sdlWin, SDL_GLContext *glCtx)
 	m_guiColors[GuiItem::CodeViewColumnHeader] = MakeColor(30, 35, 53, 255);
 	m_guiColors[GuiItem::RegisterProgCtr] = MakeColor(0, 226, 13, 255);
 	m_guiColors[GuiItem::RegisterValChg] = MakeColor(226, 200, 0, 255);
+	m_guiColors[GuiItem::ActiveFrame] = MakeColor(103, 75, 0, 255);
 	
 	/*
 		float addrColor[4] = {0.000f, 0.748f, 0.856f, 1.000f};
@@ -93,6 +94,7 @@ void GuiManager::mainLoop()
 	int32_t winSize_w, winSize_h;
 	SDL_GetWindowSize(m_sdlWindow, &winSize_w, &winSize_h);
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	winSize_h -= 28;
 	
 	while(!m_exitProgram)
 	{
@@ -152,6 +154,9 @@ void GuiManager::renderFrame()
 		if(child->isSameLine() && (ctr + 1) < m_guiChildren.size() && m_guiChildren[ctr + 1]->isSameLine() == false)
 			m_mainWindowSize.x -= 32.0f;
 			
+		if((ctr + 1) >= m_guiChildren.size())
+			m_mainWindowSize.x -= 16.0f;
+			
 		child->draw();
 		m_mainWindowSize.x -= 8.0f;
 		
@@ -199,6 +204,9 @@ void GuiManager::updateNotifyCB(GDBMI::UpdateType updateType)
 		
 	if((updType & (uint64_t) UpdateType::RegisterInfo) != 0)
 		setCacheFlag(FLAG_REGISTER_CACHE_STALE);
+		
+	if((updType & (uint64_t) UpdateType::Backtrace) != 0)
+		setCacheFlag(FLAG_STACKTRACE_CACHE_STALE);
 		
 	m_cacheFlagMutex.unlock();
 }
@@ -270,6 +278,17 @@ void GuiManager::cacheHandlerThread()
 			
 			clearCacheFlag(FLAG_REGISTER_CACHE_STALE);
 			m_registerCacheMutex.unlock();
+		}
+		
+		if(isFlagSet(FLAG_STACKTRACE_CACHE_STALE))
+		{
+			m_backtraceMutex.lock();
+			
+			m_backtraceCache.clear();
+			m_backtraceCache = gdb->getBacktrace();
+			
+			clearCacheFlag(FLAG_STACKTRACE_CACHE_STALE);
+			m_backtraceMutex.unlock();
 		}
 		
 		m_cacheFlagMutex.unlock();

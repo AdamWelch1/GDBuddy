@@ -15,7 +15,8 @@ class GDBMI
 			FuncSymbols 	= (1 << 0),
 			GVarSymbols 	= (1 << 1),
 			Disassembly 	= (1 << 2),
-			RegisterInfo	= (1 << 3)
+			RegisterInfo	= (1 << 3),
+			Backtrace		= (1 << 4)
 		};
 		
 		typedef void (*NotifyCallback)(UpdateType updType, void *userData);
@@ -62,6 +63,27 @@ class GDBMI
 			bool updated = false;
 		};
 		
+		struct FrameVariable
+		{
+			string name;
+			string type;
+			string value;
+			bool isArg = false;
+		};
+		
+		struct FrameInfo
+		{
+			uint32_t level = 0;
+			string addr;
+			string func;
+			string file;
+			string fullname;
+			uint32_t line = 0;
+			string arch;
+			
+			vector<FrameVariable> vars;
+		};
+		
 	private:
 	
 		vector<SymbolObject> m_functionSymbols;
@@ -88,6 +110,9 @@ class GDBMI
 		mutex m_regValListMutex;
 		vector<RegisterInfo> m_regValList;
 		
+		mutex m_backtraceMutex;
+		vector<FrameInfo> m_backtrace;
+		
 		void requestFunctionSymbols();
 		void requestGlobalVarSymbols();
 		
@@ -105,6 +130,7 @@ class GDBMI
 		vector<SymbolObject> getFunctionSymbols();
 		vector<SymbolObject> getGlobalVarSymbols();
 		vector<RegisterInfo> getRegisters();
+		vector<FrameInfo> getBacktrace();
 		
 		CurrentInstruction getCurrentExecutionPos();
 		vector<DisassemblyInstruction> getDisassembly();

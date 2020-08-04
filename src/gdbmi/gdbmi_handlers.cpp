@@ -12,20 +12,6 @@ void GDBMI::initHandlers()
 	m_randOffset = 0;
 	fillRandPool();
 	
-	/*
-		thread-group-added;
-		done;
-		breakpoint-created;
-		thread-group-started;
-		thread-created;
-		breakpoint-modified;
-		library-loaded;
-		running;
-		running;
-		stopped;
-		breakpoint-deleted;
-	*/
-	
 	registerCallback("running", GDBMI::runningCallbackThunk);
 	registerCallback("stopped", GDBMI::stoppedCallbackThunk);
 	registerCallback("end-stepping-range", GDBMI::stoppedCallbackThunk);
@@ -169,17 +155,10 @@ void GDBMI::handleResponse(string &responseStr)
 	}
 }
 
-// #define logPrintf(a, b, c, d, e) (fprintf(stderr, "calling logPrintf('%s')\n", b), \
-// 								  fprintf(stderr, "Params: %lu\t%lu\t%lu\n", strlen(c), strlen(d), strlen(e)), \
-// 								  logPrintf(a, b, c, d, e))
-
-
 void GDBMI::handleResultRecord(GDBResponse response)
 {
 	if(response.recordClass == "error")
 	{
-		logPrintf(LogLevel::Debug, "Raw: Token = '%s', %s", response.recordData.c_str());
-		
 		KVPair kvp = parserGetKVPair(response.recordData);
 		logPrintf(LogLevel::Error, "Error: %s\n", kvp.second.c_str());
 		// return;
@@ -188,14 +167,14 @@ void GDBMI::handleResultRecord(GDBResponse response)
 	CallbackIter cbIter;
 	if(findCallback(response.recordToken, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
 	
 	if(findCallback(response.recordClass, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
@@ -214,14 +193,14 @@ void GDBMI::handleExecAsyncRecord(GDBResponse response)
 	CallbackIter cbIter;
 	if(findCallback(response.recordToken, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
 	
 	if(findCallback(response.recordClass, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
@@ -235,14 +214,14 @@ void GDBMI::handleStatusAsyncRecord(GDBResponse response)
 	CallbackIter cbIter;
 	if(findCallback(response.recordToken, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
 	
 	if(findCallback(response.recordClass, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
@@ -256,14 +235,14 @@ void GDBMI::handleNotifyAsyncRecord(GDBResponse response)
 	CallbackIter cbIter;
 	if(findCallback(response.recordToken, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
 	
 	if(findCallback(response.recordClass, cbIter) == true)
 	{
-		CmdCallback cbFunc = cbIter->second;
+		CmdCallback cbFunc = cbIter->second.second;
 		cbFunc(this, response);
 		return;
 	}
@@ -278,12 +257,10 @@ void GDBMI::handleStreamRecords(GDBResponse response)
 	// logPrintf(LogLevel::Info, "Stream record: Data: %s\n", response.recordData.c_str());
 }
 
-// #undef logPrintf
-
-void GDBMI::registerCallback(string token, CmdCallback cb)
+void GDBMI::registerCallback(string token, CmdCallback cb, void *userData)
 {
 	m_pendingCmdMutex.lock();
-	m_pendingCommands[token] = cb;
+	m_pendingCommands[token] = {userData, cb};
 	m_pendingCmdMutex.unlock();
 }
 
@@ -303,7 +280,7 @@ bool GDBMI::findCallback(string token, CallbackIter &out)
 	return ret;
 }
 
-void GDBMI::eraseCallback(std::map<string, GDBMI::CmdCallback>::iterator &iter)
+void GDBMI::eraseCallback(CallbackIter &iter)
 {
 	m_pendingCmdMutex.lock();
 	m_pendingCommands.erase(iter);

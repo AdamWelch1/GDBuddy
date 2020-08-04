@@ -21,7 +21,7 @@ class GDBMI
 	
 		struct GDBResponse;
 		typedef std::function<void(GDBMI *, GDBResponse)> CmdCallback;
-		typedef std::map<string, CmdCallback>::iterator CallbackIter;
+		typedef std::map<string, pair<void *, CmdCallback>>::iterator CallbackIter;
 		
 		enum class GDBRecordType : uint8_t
 		{
@@ -83,7 +83,7 @@ class GDBMI
 		
 		// Callback handling stuff
 		
-		void registerCallback(string token, CmdCallback cb);
+		void registerCallback(string token, CmdCallback cb, void *userData = 0);
 		bool findCallback(string token, CallbackIter &out);
 		void eraseCallback(CallbackIter &iter);
 		mutex m_pendingCmdMutex;
@@ -91,7 +91,7 @@ class GDBMI
 		// This map is used to register callbacks when we receive a response
 		// to a command we sent. We use the token in the response to index
 		// into this map and find the correct callback.
-		std::map<string, CmdCallback> m_pendingCommands; // map<token, callback>
+		std::map<string, pair<void *, CmdCallback>> m_pendingCommands; // map<token, callback>
 		
 		
 		// Here we set up some default handlers for certain events.
@@ -234,6 +234,20 @@ class GDBMI
 		
 	private:
 		void getregValsCallback(GDBResponse resp);
+		
+	public:
+		static void getStackFramesCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->getStackFramesCallback(resp); }
+		
+	private:
+		void getStackFramesCallback(GDBResponse resp);
+		
+	public:
+		static void getStackVarsCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->getStackVarsCallback(resp); }
+		
+	private:
+		void getStackVarsCallback(GDBResponse resp);
 		
 		
 		

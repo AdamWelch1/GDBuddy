@@ -17,6 +17,7 @@ using namespace ImGui;
 #define FLAG_GLOBVAR_CACHE_STALE		(((uint64_t) 1) << 1)
 #define FLAG_DISASM_CACHE_STALE			(((uint64_t) 1) << 2)
 #define FLAG_REGISTER_CACHE_STALE		(((uint64_t) 1) << 3)
+#define FLAG_STACKTRACE_CACHE_STALE		(((uint64_t) 1) << 4)
 
 
 class GuiManager : public GuiParentWrapper
@@ -66,6 +67,8 @@ class GuiManager : public GuiParentWrapper
 		mutex &getRegListMutex() { return m_registerCacheMutex;}
 		vector<GDBMI::RegisterInfo> &getRegList() { return m_registerCache; }
 		
+		mutex &getBacktraceMutex() { return m_backtraceMutex; }
+		vector<GDBMI::FrameInfo> &getBacktrace() { return m_backtraceCache; }
 		
 		static void updateNotifyCBThunk(GDBMI::UpdateType updateType, void *obj)
 		{ ((GuiManager *) obj)->updateNotifyCB(updateType); }
@@ -94,6 +97,9 @@ class GuiManager : public GuiParentWrapper
 		
 		vector<GDBMI::RegisterInfo> m_registerCache;
 		mutex m_registerCacheMutex;
+		
+		vector<GDBMI::FrameInfo> m_backtraceCache;
+		mutex m_backtraceMutex;
 		
 		void updateNotifyCB(GDBMI::UpdateType updateType);
 		

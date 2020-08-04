@@ -102,6 +102,16 @@ vector<GDBMI::RegisterInfo> GDBMI::getRegisters()
 	return ret;
 }
 
+vector<GDBMI::FrameInfo> GDBMI::getBacktrace()
+{
+	vector<FrameInfo> ret;
+	m_backtraceMutex.lock();
+	ret = m_backtrace;
+	m_backtraceMutex.unlock();
+	
+	return ret;
+}
+
 GDBMI::CurrentInstruction GDBMI::getCurrentExecutionPos()
 {
 	CurrentInstruction ret = {0, ""};

@@ -3,6 +3,8 @@
 *.d
 imgui.ini
 gdb_manual.txt
+gdb_manual.html
+*.sublime-workspace
 /*.sublime-project
 /*.tar.gz
 /whitrabt.txt

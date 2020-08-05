@@ -15,6 +15,22 @@ void GuiCodeView::draw()
 	
 	if(BeginChild("CodeViewPane", { mwSize.x * m_width, mwSize.y * m_height }, true))
 	{
+		vector<GDBMI::BreakpointInfo> bpListCopy;
+		m_parent->getBreakpointMutex().lock();
+		bpListCopy = m_parent->getBreakpointList();
+		m_parent->getBreakpointMutex().unlock();
+		
+		auto addrIsBP = [&](string address) -> const GDBMI::BreakpointInfo*
+		{
+			for(auto &bp : bpListCopy)
+			{
+				if(bp.addr == address)
+					return &bp;
+			}
+			
+			return 0;
+		};
+		
 		mutex &m_codeLinesMutex = m_parent->getCodeLinesMtx();
 		AsmDump &m_codeLines = m_parent->getCodeLines();
 		GDBMI::StepFrame stepFrame = gdb->getStepFrame();
@@ -70,6 +86,8 @@ void GuiCodeView::draw()
 				// for(auto &disLine : disasLines)
 				for(auto &disLine : m_codeLines)
 				{
+					const GDBMI::BreakpointInfo *breakPoint = addrIsBP(disLine.addr);
+					
 					NextColumn();
 					bool selItem = (m_selectedInstruction == strtoull(disLine.addr.c_str(), 0, 16));
 					// Text(disLine.addr.c_str());
@@ -88,24 +106,48 @@ void GuiCodeView::draw()
 							instIsPC = true;
 					}
 					
+					if(breakPoint != 0)
+						PushStyleColor(ImGuiCol_Header, m_parent->getColor(GuiItem::CodeViewBpBackground));
+						
 					if(instIsPC)
 						PushFont(m_boldFont);
 						
-					PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewAddress));
+					if(breakPoint != 0)
+						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewAddressBP));
+					else
+						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewAddress));
 					Selectable(disLine.addr.c_str(),
-							   (instIsPC ? (bool) true : selItem),
-							   ImGuiSelectableFlags_SpanAllColumns);
-					PopStyleColor(1);
-					
+							   ((instIsPC || breakPoint != 0) ? (bool) true : selItem),
+							   (ImGuiSelectableFlags_SpanAllColumns |
+								ImGuiSelectableFlags_AllowDoubleClick));
+								
+					if(breakPoint != 0)
+						PopStyleColor(2);
+					else
+						PopStyleColor(1);
+						
 					if(instIsPC)
 						SetScrollHereY(0.5);
 						
 					if(IsItemClicked())
+					{
 						m_selectedInstruction = strtoull(disLine.addr.c_str(), 0, 16);
 						
+						if(IsMouseDoubleClicked(0)) // 0 = left button in ImGui...
+						{
+							if(breakPoint == 0)
+								gdb->insertBreakpointAtAddress(disLine.addr);
+							else
+								gdb->deleteBreakpoint(breakPoint->number);
+						}
+					}
+					
+					
 					NextColumn();
 					
-					if(instIsPC)
+					if(instIsPC && breakPoint != 0)
+						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewBPisPCText));
+					else if(instIsPC)
 						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewInstructionActive));
 					else
 						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewInstruction));

@@ -99,7 +99,7 @@ class GDBMI
 		// that we want the callback to execute for. The "handle_*_Records()" functions
 		// look for a callback under the class name if no token callback is found.
 		
-		// Note: **These callbacks are implemented in 'gdbmi_handlers_cb.cpp'**
+		// Note: These callbacks are implemented in 'gdbmi_handlers_cb.cpp'
 		
 		// ** execution state callbacks ** //
 		
@@ -156,6 +156,14 @@ class GDBMI
 	private:
 		void bpHitCallback(GDBResponse resp);
 		
+	public:
+		static void bpListCallbackThunk(GDBMI *obj, GDBResponse resp)
+		{ obj->bpListCallback(resp); }
+		
+	private:
+		void bpListCallback(GDBResponse resp);
+		
+		
 		
 		// ** shared library callbacks ** //
 		
@@ -172,6 +180,7 @@ class GDBMI
 		
 	private:
 		void libUnloadedCallback(GDBResponse resp);
+		
 		
 		
 		// ** thread event callbacks ** //
@@ -198,8 +207,10 @@ class GDBMI
 		void threadExitedCallback(GDBResponse resp);
 		
 		
+		
 		// ** data query response callbacks ** ///
 		
+		// Function symbols
 	public:
 		static void getFuncSymbolsCallbackThunk(GDBMI *obj, GDBResponse resp)
 		{ obj->getFuncSymbolsCallback(resp); }
@@ -207,6 +218,7 @@ class GDBMI
 	private:
 		void getFuncSymbolsCallback(GDBResponse resp);
 		
+		// Global variable symbols
 	public:
 		static void getGlobalVarSymbolsCallbackThunk(GDBMI *obj, GDBResponse resp)
 		{ obj->getGlobalVarSymbolsCallback(resp); }
@@ -214,6 +226,7 @@ class GDBMI
 	private:
 		void getGlobalVarSymbolsCallback(GDBResponse resp);
 		
+		// Disassembly
 	public:
 		static void getDisassemblyCallbackThunk(GDBMI *obj, GDBResponse resp)
 		{ obj->getDisassemblyCallback(resp); }
@@ -225,6 +238,7 @@ class GDBMI
 		static void getregNamesCallbackThunk(GDBMI *obj, GDBResponse resp)
 		{ obj->getregNamesCallback(resp); }
 		
+		// Register names and values
 	private:
 		void getregNamesCallback(GDBResponse resp);
 		
@@ -235,6 +249,7 @@ class GDBMI
 	private:
 		void getregValsCallback(GDBResponse resp);
 		
+		// Stack frames and variables
 	public:
 		static void getStackFramesCallbackThunk(GDBMI *obj, GDBResponse resp)
 		{ obj->getStackFramesCallback(resp); }

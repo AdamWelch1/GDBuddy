@@ -16,12 +16,14 @@ class GDBMI
 			GVarSymbols 	= (1 << 1),
 			Disassembly 	= (1 << 2),
 			RegisterInfo	= (1 << 3),
-			Backtrace		= (1 << 4)
+			Backtrace		= (1 << 4),
+			BreakPtList		= (1 << 5)
 		};
 		
 		typedef void (*NotifyCallback)(UpdateType updType, void *userData);
 		typedef pair<uint64_t, string> CurrentInstruction;
 		
+		// These are all the structures used to contain data available via the API
 		struct SymbolObject
 		{
 			bool isActive;
@@ -84,6 +86,20 @@ class GDBMI
 			vector<FrameVariable> vars;
 		};
 		
+		struct BreakpointInfo
+		{
+			uint32_t number = 0;
+			string type; // Breakpoint or watchpoint
+			string disp; // Keep or nokeep
+			bool enabled;
+			string addr;
+			string func;
+			string fullname;
+			string file;
+			uint32_t line;
+			uint32_t times; // Hit count
+		};
+		
 	private:
 	
 		vector<SymbolObject> m_functionSymbols;
@@ -113,8 +129,12 @@ class GDBMI
 		mutex m_backtraceMutex;
 		vector<FrameInfo> m_backtrace;
 		
+		mutex m_breakPointMutex;
+		vector<BreakpointInfo> m_breakPointList;
+		
 		void requestFunctionSymbols();
 		void requestGlobalVarSymbols();
+		void requestBreakpointList();
 		
 		void requestCurrentExecPos();
 		
@@ -131,6 +151,7 @@ class GDBMI
 		vector<SymbolObject> getGlobalVarSymbols();
 		vector<RegisterInfo> getRegisters();
 		vector<FrameInfo> getBacktrace();
+		vector<BreakpointInfo> getBpList();
 		
 		CurrentInstruction getCurrentExecutionPos();
 		vector<DisassemblyInstruction> getDisassembly();

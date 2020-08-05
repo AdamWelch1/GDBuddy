@@ -177,22 +177,129 @@ void GDBMI::endStepCallback(GDBResponse resp)
 
 void GDBMI::bpCreatedCallback(GDBResponse resp)
 {
-	logPrintf(LogLevel::Verbose, "Breakpoint created\n");
+	// logPrintf(LogLevel::Verbose, "Breakpoint created\n");
+	requestBreakpointList();
 }
 
 void GDBMI::bpDeletedCallback(GDBResponse resp)
 {
-	logPrintf(LogLevel::Verbose, "Breakpoint deleted\n");
+	// logPrintf(LogLevel::Verbose, "Breakpoint deleted\n");
+	requestBreakpointList();
 }
 
 void GDBMI::bpModifiedCallback(GDBResponse resp)
 {
-	logPrintf(LogLevel::Verbose, "Breakpoint modified\n");
+	// logPrintf(LogLevel::Verbose, "Breakpoint modified\n");
+	requestBreakpointList();
 }
 
 void GDBMI::bpHitCallback(GDBResponse resp)
 {
-	logPrintf(LogLevel::Info, "Breakpoint hit\n");
+	// logPrintf(LogLevel::Info, "Breakpoint hit\n");
+	requestBreakpointList();
+}
+
+void GDBMI::bpListCallback(GDBResponse resp)
+{
+	if(resp.recordData.length() > 0)
+	{
+		string bpTableStr = resp.recordData;
+		KVPair rootPair = parserGetKVPair(bpTableStr);
+		
+		if(rootPair.first == "BreakpointTable")
+		{
+			string tableTuple = parserGetTuple(rootPair.second);
+			
+			KVPairVector tablePairs;
+			parserGetKVPairs(tableTuple, tablePairs);
+			
+			m_breakPointMutex.lock();
+			m_breakPointList.clear();
+			
+			for(auto &tblPair : tablePairs)
+			{
+				if(tblPair.first == "body")
+				{
+					/*	Breakpoint response format
+						body=[
+						bkpt={
+						number="1",			func="main",
+						type="breakpoint",	file="hello.c",
+						disp="keep",		line="5",
+						enabled="y",		thread-groups=["i1"],
+						addr="0x000100d0",	times="0"
+						},
+						bkpt={
+						number="2",			file="hello.c",
+						type="breakpoint",	fullname="/home/foo/hello.c",
+						disp="keep",		line="13",
+						enabled="y",		thread-groups=["i1"],
+						addr="0x00010114",	times="0",
+						func="foo",
+						}]
+					*/
+					
+					string bpListStr = tblPair.second;
+					if(bpListStr[0] == '[')
+						bpListStr.erase(bpListStr.begin());
+						
+					if(bpListStr.back() == ']')
+						bpListStr.pop_back();
+						
+					while(bpListStr.length() > 1)
+					{
+						KVPair bpPair = parserGetKVPair(bpListStr);
+						
+						if(bpPair.first == "bkpt")
+						{
+							string bpAttrs = parserGetTuple(bpPair.second);
+							KVPairVector bpAttrList;
+							parserGetKVPairs(bpAttrs, bpAttrList);
+							
+							BreakpointInfo tmp;
+							
+							for(auto &bpattr : bpAttrList)
+							{
+								if(bpattr.first == "number")
+									tmp.number = strtoul(bpattr.second.c_str(), 0, 10);
+								if(bpattr.first == "file")
+									tmp.file = bpattr.second;
+								if(bpattr.first == "type")
+									tmp.type = bpattr.second;
+								if(bpattr.first == "fullname")
+									tmp.fullname = bpattr.second;
+								if(bpattr.first == "disp")
+									tmp.disp = bpattr.second;
+								if(bpattr.first == "line")
+									tmp.line = strtoul(bpattr.second.c_str(), 0, 10);
+								if(bpattr.first == "enabled")
+									tmp.enabled = (bpattr.second[0] == 'y' ? true : false);
+								if(bpattr.first == "addr")
+									tmp.addr = bpattr.second;
+								if(bpattr.first == "times")
+									tmp.times = strtoul(bpattr.second.c_str(), 0, 10);
+								if(bpattr.first == "func")
+									tmp.func = bpattr.second;
+							}
+							
+							// logPrintf(LogLevel::Debug, "BP # = %u; Func = %s; Addr = %s", tmp.number, tmp.func.c_str(), tmp.addr.c_str());
+							m_breakPointList.push_back(tmp);
+						}
+					}
+					
+				}
+			}
+			
+			m_breakPointMutex.unlock();
+		}
+	}
+	
+	CallbackIter cb;
+	if(findCallback(resp.recordToken, cb) == true)
+		eraseCallback(cb);
+		
+	if(m_notifyCallback != 0)
+		m_notifyCallback(UpdateType::BreakPtList, m_notifyUserData);
 }
 
 

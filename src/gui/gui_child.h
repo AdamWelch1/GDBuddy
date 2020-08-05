@@ -41,6 +41,8 @@ class GuiParentWrapper
 		virtual AsmDump &getCodeLines() = 0;
 		virtual mutex &getGlobVarListMtx() = 0;
 		virtual vector<GDBMI::SymbolObject> &getGlobVarList() = 0;
+		virtual mutex &getBreakpointMutex() = 0;
+		virtual vector<GDBMI::BreakpointInfo> &getBreakpointList() = 0;
 };
 
 #endif

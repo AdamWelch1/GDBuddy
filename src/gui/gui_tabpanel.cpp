@@ -52,7 +52,7 @@ void GuiTabPanel::draw()
 		static ImGuiTabBarFlags_ tabFlags = (ImGuiTabBarFlags_) \
 											(ImGuiTabBarFlags_Reorderable |
 											 ImGuiTabBarFlags_NoCloseWithMiddleMouseButton |
-											 ImGuiTabBarFlags_FittingPolicyScroll);
+											 ImGuiTabBarFlags_FittingPolicyResizeDown);
 											 
 		if(BeginTabBar(string(m_panelName + "tablist").c_str(), tabFlags))
 		{

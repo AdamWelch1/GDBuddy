@@ -129,3 +129,28 @@ void GDBMI::doFileCommand(FileCmd cmd, string arg)
 		
 	}
 }
+
+void GDBMI::insertBreakpointAtAddress(string addr)
+{
+
+	auto insertCB = [&](GDBMI * obj, GDBResponse resp) -> void
+	{
+		obj->requestBreakpointList();
+	};
+	
+	string cmdToken = getTokenStr();
+	registerCallback(cmdToken, insertCB);
+	sendCommand(cmdToken + string("-break-insert *") + addr);
+}
+
+void GDBMI::deleteBreakpoint(uint32_t bpNum)
+{
+	auto deleteCB = [&](GDBMI * obj, GDBResponse resp) -> void
+	{
+		obj->requestBreakpointList();
+	};
+	
+	string cmdToken = getTokenStr();
+	registerCallback(cmdToken, deleteCB);
+	sendCommand(cmdToken + string("-break-delete ") + std::to_string(bpNum));
+}

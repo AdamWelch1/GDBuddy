@@ -71,6 +71,13 @@ void GDBMI::requestDisassembleLine(string file, string line)
 	sendCommand(token + string("-data-disassemble -f ") + file + string(" -l ") + line + " 0");
 }
 
+void GDBMI::requestBreakpointList()
+{
+	string cmdToken = getTokenStr();
+	registerCallback(cmdToken, GDBMI::bpListCallbackThunk);
+	sendCommand(cmdToken + "-break-list");
+}
+
 
 vector<GDBMI::SymbolObject> GDBMI::getFunctionSymbols()
 {
@@ -108,6 +115,16 @@ vector<GDBMI::FrameInfo> GDBMI::getBacktrace()
 	m_backtraceMutex.lock();
 	ret = m_backtrace;
 	m_backtraceMutex.unlock();
+	
+	return ret;
+}
+
+vector<GDBMI::BreakpointInfo> GDBMI::getBpList()
+{
+	vector<BreakpointInfo> ret;
+	m_breakPointMutex.lock();
+	ret = m_breakPointList;
+	m_breakPointMutex.unlock();
 	
 	return ret;
 }

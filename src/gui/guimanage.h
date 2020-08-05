@@ -18,6 +18,7 @@ using namespace ImGui;
 #define FLAG_DISASM_CACHE_STALE			(((uint64_t) 1) << 2)
 #define FLAG_REGISTER_CACHE_STALE		(((uint64_t) 1) << 3)
 #define FLAG_STACKTRACE_CACHE_STALE		(((uint64_t) 1) << 4)
+#define FLAG_BREAKPOINT_CACHE_STALE		(((uint64_t) 1) << 5)
 
 
 class GuiManager : public GuiParentWrapper
@@ -38,8 +39,8 @@ class GuiManager : public GuiParentWrapper
 		// Get fonts
 		ImFont *getDefaultFont()		{ return m_defaultFont; }
 		ImFont *getBoldFont()			{ return m_boldFont; }
-		ImFont *getItalicFont()		{ return m_italicFont; }
-		ImFont *getBoldItalicFont()	{ return m_boldItalicFont;  }
+		ImFont *getItalicFont()			{ return m_italicFont; }
+		ImFont *getBoldItalicFont()		{ return m_boldItalicFont;  }
 		
 		
 		// Access gui info
@@ -69,6 +70,10 @@ class GuiManager : public GuiParentWrapper
 		
 		mutex &getBacktraceMutex() { return m_backtraceMutex; }
 		vector<GDBMI::FrameInfo> &getBacktrace() { return m_backtraceCache; }
+		
+		mutex &getBreakpointMutex() { return m_bpCacheMutex; }
+		vector<GDBMI::BreakpointInfo> &getBreakpointList() { return m_breakpointCache; }
+		
 		
 		static void updateNotifyCBThunk(GDBMI::UpdateType updateType, void *obj)
 		{ ((GuiManager *) obj)->updateNotifyCB(updateType); }
@@ -100,6 +105,9 @@ class GuiManager : public GuiParentWrapper
 		
 		vector<GDBMI::FrameInfo> m_backtraceCache;
 		mutex m_backtraceMutex;
+		
+		vector<GDBMI::BreakpointInfo> m_breakpointCache;
+		mutex m_bpCacheMutex;
 		
 		void updateNotifyCB(GDBMI::UpdateType updateType);
 		

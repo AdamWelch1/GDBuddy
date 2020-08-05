@@ -46,9 +46,12 @@ enum class GuiItem : uint32_t
 	
 	CodeViewColumnHeader,
 	CodeViewAddress,
+	CodeViewAddressBP,
 	CodeViewInstruction,
 	CodeViewInstructionActive,
 	CodeViewBackground,
+	CodeViewBpBackground,
+	CodeViewBPisPCText,
 	
 	RegisterProgCtr,
 	RegisterValChg,

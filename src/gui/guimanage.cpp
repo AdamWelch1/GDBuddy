@@ -55,16 +55,20 @@ GuiManager::GuiManager(SDL_Window *sdlWin, SDL_GLContext *glCtx)
 		);
 	};
 	
-	m_guiColors[GuiItem::CodeViewAddress] = MakeColor(0, 191, 218, 255);
-	m_guiColors[GuiItem::CodeViewInstruction] = MakeColor(160, 160, 160, 255);
-	m_guiColors[GuiItem::CodeViewInstructionActive] = MakeColor(224, 156, 0, 255);
-	m_guiColors[GuiItem::ChildBackground] = MakeColor(40, 41, 35, 255);
-	m_guiColors[GuiItem::ListItemBackgroundSelected] = MakeColor(66, 66, 58, 255);
-	m_guiColors[GuiItem::ListItemBackgroundHover] = MakeColor(45, 78, 106, 255);
-	m_guiColors[GuiItem::CodeViewColumnHeader] = MakeColor(30, 35, 53, 255);
-	m_guiColors[GuiItem::RegisterProgCtr] = MakeColor(0, 226, 13, 255);
-	m_guiColors[GuiItem::RegisterValChg] = MakeColor(226, 200, 0, 255);
-	m_guiColors[GuiItem::ActiveFrame] = MakeColor(103, 75, 0, 255);
+	m_guiColors[GuiItem::CodeViewAddress] = MakeColor(0, 191, 218, 255);			// Regular address color
+	m_guiColors[GuiItem::CodeViewAddressBP] = MakeColor(231, 0, 0, 255);
+	m_guiColors[GuiItem::CodeViewInstruction] = MakeColor(160, 160, 160, 255);		// Instruction text color
+	m_guiColors[GuiItem::CodeViewInstructionActive] = MakeColor(224, 156, 0, 255);	// Active instruction text color
+	m_guiColors[GuiItem::CodeViewColumnHeader] = MakeColor(30, 35, 53, 255);		// Column header bg color
+	m_guiColors[GuiItem::CodeViewBpBackground] = MakeColor(16, 16, 16, 255);		// Disas. BP line BG color
+	m_guiColors[GuiItem::CodeViewBPisPCText] = MakeColor(5, 221, 0, 255);			// Inst. color where BPaddr==$pc
+	
+	m_guiColors[GuiItem::ChildBackground] = MakeColor(40, 41, 35, 255);				// Child window bg color
+	m_guiColors[GuiItem::ListItemBackgroundSelected] = MakeColor(66, 66, 58, 255);	// Selected list item bg color
+	m_guiColors[GuiItem::ListItemBackgroundHover] = MakeColor(45, 78, 106, 255);	// List item hover bg color
+	m_guiColors[GuiItem::RegisterProgCtr] = MakeColor(0, 226, 13, 255);				// Text color of $pc reg. value
+	m_guiColors[GuiItem::RegisterValChg] = MakeColor(226, 200, 0, 255);				// Text color of changed registers
+	m_guiColors[GuiItem::ActiveFrame] = MakeColor(103, 75, 0, 255);					// B.trace sel. frame bg color
 	
 	/*
 		float addrColor[4] = {0.000f, 0.748f, 0.856f, 1.000f};
@@ -208,6 +212,9 @@ void GuiManager::updateNotifyCB(GDBMI::UpdateType updateType)
 	if((updType & (uint64_t) UpdateType::Backtrace) != 0)
 		setCacheFlag(FLAG_STACKTRACE_CACHE_STALE);
 		
+	if((updType & (uint64_t) UpdateType::BreakPtList) != 0)
+		setCacheFlag(FLAG_BREAKPOINT_CACHE_STALE);
+		
 	m_cacheFlagMutex.unlock();
 }
 
@@ -289,6 +296,17 @@ void GuiManager::cacheHandlerThread()
 			
 			clearCacheFlag(FLAG_STACKTRACE_CACHE_STALE);
 			m_backtraceMutex.unlock();
+		}
+		
+		if(isFlagSet(FLAG_BREAKPOINT_CACHE_STALE))
+		{
+			m_bpCacheMutex.lock();
+			
+			m_breakpointCache.clear();
+			m_breakpointCache = gdb->getBpList();
+			
+			clearCacheFlag(FLAG_BREAKPOINT_CACHE_STALE);
+			m_bpCacheMutex.unlock();
 		}
 		
 		m_cacheFlagMutex.unlock();

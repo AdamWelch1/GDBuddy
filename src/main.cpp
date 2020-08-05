@@ -16,6 +16,7 @@
 GDBMI *gdb = 0;
 GuiManager *gui = 0;
 
+void breakpointsTabPainter(string tabName, void *userData);
 void symbolTabPainter(string tabName, void *userData);
 void registerTabPainter(string tabName, void *userData);
 void backtraceTabPainter(string tabname, void *userData);
@@ -108,7 +109,7 @@ int main(int argc, char **argv)
 	
 	GuiTabPanel rightPanel("InferiorInfoPanel", 0.2f, 0.6f);
 	rightPanel.addTab("Registers", registerTabPainter);
-	rightPanel.addTab("Local Vars", 0);
+	rightPanel.addTab("Threads", 0);
 	rightPanel.setSameLine(true);
 	
 	GuiCodeView codeView(0.6f, 0.6f);
@@ -166,7 +167,8 @@ int main(int argc, char **argv)
 	GuiTabPanel stackPanel("StackPanel", 0.35, 0.33);
 	stackPanel.setSameLine(true);
 	stackPanel.addTab("Backtrace", backtraceTabPainter);
-	stackPanel.addTab("Stack dump", 0);
+	stackPanel.addTab("Breakpoints", breakpointsTabPainter);
+	// stackPanel.addTab("Stack dump", 0);
 	
 	GuiConsole console(0.65, 0.33);
 	
@@ -393,7 +395,7 @@ void backtraceTabPainter(string tabname, void *userData)
 	mutex &btMutex = gui->getBacktraceMutex();
 	
 	ImFont *boldFont = gui->getBoldFont();
-	ImFont *boldItalicFont = gui->getBoldItalicFont();
+	// ImFont *boldItalicFont = gui->getBoldItalicFont();
 	
 	// Column headers
 	Columns(4);
@@ -472,5 +474,69 @@ void backtraceTabPainter(string tabname, void *userData)
 		}
 	}
 	
+	Columns(1);
 	btMutex.unlock();
+}
+
+void breakpointsTabPainter(string tabName, void *userData)
+{
+	/*
+		struct BreakpointInfo
+		{
+			uint32_t number = 0;
+			string type; // Breakpoint or watchpoint
+			string disp; // Keep or del
+			bool enabled;
+			string addr;
+			string func;
+			string fullname;
+			string file;
+			uint32_t line;
+			uint32_t times; // Hit count
+	*/
+	
+	mutex &bpMutex = gui->getBreakpointMutex();
+	bpMutex.lock();
+	
+	ImFont *boldFont = gui->getBoldFont();
+	vector<GDBMI::BreakpointInfo> &bpList = gui->getBreakpointList();
+	
+	Columns(4);
+	SetColumnWidth(0, 60);
+	SetColumnWidth(1, 60);
+	SetColumnWidth(2, 190);
+	// SetColumnWidth(3, 80);
+	
+	PushFont(boldFont);
+	Text("BP #");
+	NextColumn();
+	Text("Tmp");
+	NextColumn();
+	Text("Address");
+	NextColumn();
+	Text("Function");
+	NextColumn();
+	Separator();
+	PopFont();
+	
+	for(auto &bp : bpList)
+	{
+		char buf[512] = {0};
+		sprintf(buf, "%u", bp.number);
+		
+		Selectable(buf, false, ImGuiSelectableFlags_SpanAllColumns);
+		NextColumn();
+		Text(bp.disp == "keep" ? " No" : "Yes");
+		NextColumn();
+		Text(bp.addr.c_str());
+		NextColumn();
+		
+		sprintf(buf, "%s:%u", bp.func.c_str(), bp.line);
+		Text(buf);
+		Separator();
+		NextColumn();
+	}
+	
+	Columns(1);
+	bpMutex.unlock();
 }

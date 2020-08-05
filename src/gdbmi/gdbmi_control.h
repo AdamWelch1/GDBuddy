@@ -52,6 +52,8 @@ class GDBMI
 		
 		void doFileCommand(FileCmd cmd, string arg);
 		
+		void insertBreakpointAtAddress(string addr);
+		void deleteBreakpoint(uint32_t bpNum);
 		
 // *INDENT-OFF*
 #ifndef SOMETHING_UNIQUE_GDBMI_H

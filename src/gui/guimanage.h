@@ -8,6 +8,7 @@
 #include "gui_tabpanel.h"
 #include "gui_toolbar.h"
 #include "gui_console.h"
+#include "gui_menu.h"
 
 #include "gdbmi/gdbmi.h"
 
@@ -34,7 +35,7 @@ class GuiManager : public GuiParentWrapper
 		
 		
 		void addChild(GuiChild *child) { child->setParent(this); m_guiChildren.push_back(child); }
-		
+		void setMenuBuilder(GuiMenuBuilder &gmb) { m_menuBuilder = gmb; }
 		
 		// Get fonts
 		ImFont *getDefaultFont()		{ return m_defaultFont; }
@@ -73,6 +74,12 @@ class GuiManager : public GuiParentWrapper
 		
 		mutex &getBreakpointMutex() { return m_bpCacheMutex; }
 		vector<GDBMI::BreakpointInfo> &getBreakpointList() { return m_breakpointCache; }
+		
+		
+		void showDialog()
+		{
+			m_showLoadInferiorDialog = true;
+		}
 		
 		
 		static void updateNotifyCBThunk(GDBMI::UpdateType updateType, void *obj)
@@ -128,12 +135,15 @@ class GuiManager : public GuiParentWrapper
 		ImFont *m_italicFont = 0;
 		ImFont *m_boldItalicFont = 0;
 		
+		GuiMenuBuilder m_menuBuilder;
+		bool m_showLoadInferiorDialog = false;
+		
 		vector<GuiChild *> m_guiChildren;
+		map<GuiItem, ImVec4> m_guiColors;
 		ImVec2 m_mainWindowSize = {0.0f, 0.0f};
 		
-		bool m_exitProgram = false;
 		
-		map<GuiItem, ImVec4> m_guiColors;
+		bool m_exitProgram = false;
 		
 		SDL_Window *m_sdlWindow;
 		SDL_GLContext *m_glContext;

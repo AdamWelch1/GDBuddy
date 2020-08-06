@@ -3,6 +3,7 @@
 
 #include "gui_defs.h"
 #include "gui_child.h"
+#include "gui_menu.h"
 
 
 class GuiCodeView : public GuiChild
@@ -11,7 +12,7 @@ class GuiCodeView : public GuiChild
 	
 	
 		GuiCodeView();
-		GuiCodeView(float w, float h)
+		GuiCodeView(float w, float h) : GuiCodeView()
 		{
 			m_width = w;
 			m_height = h;
@@ -30,6 +31,16 @@ class GuiCodeView : public GuiChild
 		
 	private:
 	
+		struct GMI_Data
+		{
+			bool bpIsSet = false;
+			uint32_t bpNum = 0x7FFFFFF;
+			char setAddr[64] = {0};
+		};
+		
+		void contextMenuHandler(GMI_Data &menuData);
+		vector<GuiMenuItem> m_menuItems;
+		
 		uint64_t m_selectedInstruction = 0;
 		
 		float m_width 				= 400;

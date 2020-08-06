@@ -72,11 +72,13 @@ int main(int argc, char **argv)
 		
 		SDL_WindowFlags window_flags = (SDL_WindowFlags)
 									   (SDL_WINDOW_OPENGL |
-										SDL_WINDOW_ALLOW_HIGHDPI |
-										SDL_WINDOW_MAXIMIZED);
-										
+										SDL_WINDOW_ALLOW_HIGHDPI
+										// SDL_WINDOW_MAXIMIZED
+									   );
+									   
 		SDL_Rect displaySize;
 		SDL_GetDisplayUsableBounds(0, &displaySize);
+		displaySize.h -= 30;
 		
 		window = SDL_CreateWindow("DebugUI",
 								  0,
@@ -222,7 +224,104 @@ int main(int argc, char **argv)
 	gui->addChild(&console);
 	gui->addChild(&stackPanel);
 	
+	GuiMenuBuilder appMenu;
+	GuiMenuItem menuItem;
+	GuiMenuItem subItem;
 	
+	/*
+		MenuItemType type = MenuItemType::Regular;
+		string label = "Menu Item";
+		string shortcut = "";
+		bool isToggled = false;
+		bool isEnabled = true;
+		vector<GuiMenuItem> subItems;
+		MenuItemCallback cbFunc = 0;
+	*/
+	
+	menuItem.label = "File";
+	menuItem.type = MenuItemType::Submenu;
+	
+	// Create file menu items
+	{
+		subItem = // Open inferior
+		{
+			MenuItemType::Regular,
+			"Open inferior...",
+			"Ctrl+O",
+			false,	// Toggled
+			true,	// Enabled
+			{},		// Vector of submenu items
+			[](GuiMenuItem * obj) -> void
+			{
+				gui->showDialog();
+			}
+		};
+		menuItem.subItems.push_back(subItem);
+		
+		subItem = // Attach to process
+		{
+			MenuItemType::Regular,
+			"Attach to process",
+			"",		// Shortcut
+			false,	// Toggled
+			true,	// Enabled
+			{},		// Vector of submenu items
+			[](GuiMenuItem * obj) -> void
+			{
+			
+			}
+		};
+		menuItem.subItems.push_back(subItem);
+		
+		subItem = // Detach from inferior
+		{
+			MenuItemType::Regular,
+			"Detach from inferior",
+			"",		// Shortcut
+			false,	// Toggled
+			true,	// Enabled
+			{},		// Vector of submenu items
+			[](GuiMenuItem * obj) -> void
+			{
+				gdb->detachInferior();
+			}
+		};
+		menuItem.subItems.push_back(subItem);
+		
+		subItem = // Detach and terminate
+		{
+			MenuItemType::Regular,
+			"Detach and terminate",
+			"",		// Shortcut
+			false,	// Toggled
+			true,	// Enabled
+			{},		// Vector of submenu items
+			[](GuiMenuItem * obj) -> void
+			{
+			
+			}
+		};
+		menuItem.subItems.push_back(subItem);
+		menuItem.subItems.push_back({MenuItemType::Separator});
+		
+		subItem = // Exit
+		{
+			MenuItemType::Regular,
+			"Exit",
+			"",		// Shortcut
+			false,	// Toggled
+			true,	// Enabled
+			{},		// Vector of submenu items
+			[](GuiMenuItem * obj) -> void
+			{
+				gui->exit();
+			}
+		};
+		menuItem.subItems.push_back(subItem);
+	}
+	
+	appMenu.addMenu(menuItem);
+	gui->setMenuBuilder(appMenu);
 	
 	gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/home/aj/code/huffman/main");
 	gui->run();
@@ -480,26 +579,15 @@ void backtraceTabPainter(string tabname, void *userData)
 
 void breakpointsTabPainter(string tabName, void *userData)
 {
-	/*
-		struct BreakpointInfo
-		{
-			uint32_t number = 0;
-			string type; // Breakpoint or watchpoint
-			string disp; // Keep or del
-			bool enabled;
-			string addr;
-			string func;
-			string fullname;
-			string file;
-			uint32_t line;
-			uint32_t times; // Hit count
-	*/
+	GDBMI::StepFrame stepFrame = gdb->getStepFrame();
+	GDBMI::CurrentInstruction curPos = gdb->getCurrentExecutionPos();
 	
 	mutex &bpMutex = gui->getBreakpointMutex();
 	bpMutex.lock();
 	
 	ImFont *boldFont = gui->getBoldFont();
 	vector<GDBMI::BreakpointInfo> &bpList = gui->getBreakpointList();
+	
 	
 	Columns(4);
 	SetColumnWidth(0, 60);
@@ -521,10 +609,30 @@ void breakpointsTabPainter(string tabName, void *userData)
 	
 	for(auto &bp : bpList)
 	{
+		bool bpIsPC = false;
+		if(stepFrame.isValid)
+		{
+			// Is this instruction pointed to by the frame GDB just gave us?
+			if(stepFrame.address == bp.addr)
+				bpIsPC = true;
+		}
+		else
+		{
+			// Is this instruction pointed to by the program counter, $pc (ex. eip, rip)?
+			if(curPos.first == strtoull(bp.addr.c_str(), 0, 16))
+				bpIsPC = true;
+		}
+		
+		if(bpIsPC)
+		{
+			PushStyleColor(ImGuiCol_Header, gui->getColor(GuiItem::CodeViewBpBackground));
+			PushStyleColor(ImGuiCol_Text, gui->getColor(GuiItem::CodeViewBPisPCText));
+		}
+		
 		char buf[512] = {0};
 		sprintf(buf, "%u", bp.number);
 		
-		Selectable(buf, false, ImGuiSelectableFlags_SpanAllColumns);
+		Selectable(buf, bpIsPC, ImGuiSelectableFlags_SpanAllColumns);
 		NextColumn();
 		Text(bp.disp == "keep" ? " No" : "Yes");
 		NextColumn();
@@ -535,8 +643,16 @@ void breakpointsTabPainter(string tabName, void *userData)
 		Text(buf);
 		Separator();
 		NextColumn();
+		
+		if(bpIsPC)
+			PopStyleColor(2);
 	}
 	
 	Columns(1);
 	bpMutex.unlock();
+}
+
+void appMenuBuilder()
+{
+
 }

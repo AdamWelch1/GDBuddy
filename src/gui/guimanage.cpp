@@ -98,7 +98,7 @@ void GuiManager::mainLoop()
 	int32_t winSize_w, winSize_h;
 	SDL_GetWindowSize(m_sdlWindow, &winSize_w, &winSize_h);
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-	winSize_h -= 28;
+	// winSize_h -= 28;
 	
 	while(!m_exitProgram)
 	{
@@ -149,6 +149,51 @@ void GuiManager::renderFrame()
 	PushStyleColor(ImGuiCol_HeaderHovered, getColor(GuiItem::ListItemBackgroundHover));
 	PushStyleColor(ImGuiCol_HeaderActive, getColor(GuiItem::ListItemBackgroundHover));
 	
+	if(BeginMenuBar())
+	{
+		m_menuBuilder.buildMenu();
+		EndMenuBar();
+	}
+	
+	static char textInputBuf[4096] = {0};
+	ImVec2 center(GetIO().DisplaySize.x * 0.5f, GetIO().DisplaySize.y * 0.5f);
+	SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	
+	if(m_showLoadInferiorDialog)
+		OpenPopup("Openinferior");
+		
+	if(BeginPopupModal("Openinferior", 0, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		m_showLoadInferiorDialog = false;
+		bool inputApply = false;
+		
+		Text("Inferior path: ");
+		SameLine();
+		
+		SetKeyboardFocusHere();
+		if(InputText("Inferiorpath", textInputBuf, 4095, ImGuiInputTextFlags_EnterReturnsTrue))
+			inputApply = true;
+		SetItemDefaultFocus();
+		SameLine();
+		
+		if(inputApply || Button("Okay"))
+		{
+			gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, textInputBuf);
+			memset(textInputBuf, 0, 4096);
+			CloseCurrentPopup();
+		}
+		
+		SameLine();
+		
+		if(Button("Cancel"))
+		{
+			CloseCurrentPopup();
+			memset(textInputBuf, 0, 4096);
+		}
+		
+		EndPopup();
+	}
+	
 	uint32_t ctr = 0;
 	for(auto &child : m_guiChildren)
 	{
@@ -186,6 +231,24 @@ void GuiManager::handleInput()
 				event.window.event == SDL_WINDOWEVENT_CLOSE &&
 				event.window.windowID == SDL_GetWindowID(m_sdlWindow))
 			m_exitProgram = true;
+			
+		// On my system at least, the maximized SDL window
+		// likes to re-appear a few hundred pixels offset from
+		// origin 0,0. This fixes that.
+		if(event.type == SDL_WINDOWEVENT)
+		{
+			switch(event.window.event)
+			{
+				case SDL_WINDOWEVENT_SHOWN:
+				case SDL_WINDOWEVENT_EXPOSED:
+					// case SDL_WINDOWEVENT_MOVED:
+					// case SDL_WINDOWEVENT_RESTORED:
+				{
+					// SDL_SetWindowPosition(m_sdlWindow, 0, 0);
+				}
+				break;
+			}
+		}
 	}
 }
 
@@ -313,3 +376,4 @@ void GuiManager::cacheHandlerThread()
 		usleep(1000 * 50);
 	}
 }
+

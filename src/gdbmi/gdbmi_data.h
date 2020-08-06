@@ -135,6 +135,8 @@ class GDBMI
 		void requestFunctionSymbols();
 		void requestGlobalVarSymbols();
 		void requestBreakpointList();
+		void requestRegisterInfo();
+		void requestBacktrace();
 		
 		void requestCurrentExecPos();
 		
@@ -146,6 +148,8 @@ class GDBMI
 		void requestDisassembleAddr(string addr);
 		void requestDisassembleFunc(string func) { requestDisassembleAddr(func); }
 		void requestDisassembleLine(string file, string line);
+		
+		void refreshData();
 		
 		vector<SymbolObject> getFunctionSymbols();
 		vector<SymbolObject> getGlobalVarSymbols();

@@ -4,6 +4,24 @@
 extern GDBMI *gdb;
 // extern GuiManager *gui;
 
+GuiCodeView::GuiCodeView()
+{
+	GuiMenuItem mi;
+	mi.label = "Set breakpoint";
+	mi.shortcut = "Space";
+	mi.cbFunc = [](GuiMenuItem * mItem)
+	{
+		GMI_Data *bpInfo = (GMI_Data *)(mItem->rawStruct);
+		
+		if(bpInfo->bpIsSet)
+			gdb->deleteBreakpoint(bpInfo->bpNum);
+		else
+			gdb->insertBreakpointAtAddress(bpInfo->setAddr);
+	};
+	
+	m_menuItems.push_back(mi);
+}
+
 void GuiCodeView::draw()
 {
 	if(m_sameLine)
@@ -106,16 +124,20 @@ void GuiCodeView::draw()
 							instIsPC = true;
 					}
 					
+					// Set BP line background color
 					if(breakPoint != 0)
 						PushStyleColor(ImGuiCol_Header, m_parent->getColor(GuiItem::CodeViewBpBackground));
 						
 					if(instIsPC)
 						PushFont(m_boldFont);
 						
+					// Set address text color
 					if(breakPoint != 0)
 						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewAddressBP));
 					else
 						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewAddress));
+						
+					// Draw address text
 					Selectable(disLine.addr.c_str(),
 							   ((instIsPC || breakPoint != 0) ? (bool) true : selItem),
 							   (ImGuiSelectableFlags_SpanAllColumns |
@@ -126,9 +148,11 @@ void GuiCodeView::draw()
 					else
 						PopStyleColor(1);
 						
+					// Scroll to highlighted instruction
 					if(instIsPC)
 						SetScrollHereY(0.5);
 						
+					// Highlight item if clicked
 					if(IsItemClicked())
 					{
 						m_selectedInstruction = strtoull(disLine.addr.c_str(), 0, 16);
@@ -142,14 +166,29 @@ void GuiCodeView::draw()
 						}
 					}
 					
+					// Show context menu on right-click and highlight item
+					PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0, 8.0));
+					if(BeginPopupContextItem(disLine.addr.c_str()))
+					{
+						m_selectedInstruction = strtoull(disLine.addr.c_str(), 0, 16);
+						
+						GMI_Data data;
+						data.bpIsSet = (breakPoint != 0);
+						data.bpNum = (breakPoint != 0) ? breakPoint->number : 0x7FFFFFF;
+						strncpy(data.setAddr, disLine.addr.c_str(), 63);
+						
+						contextMenuHandler(data);
+						EndPopup();
+					}
+					PopStyleVar(1);
+					
 					
 					NextColumn();
-					
-					if(instIsPC && breakPoint != 0)
+					if(instIsPC && breakPoint != 0) // Text color if active instruction is BP
 						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewBPisPCText));
-					else if(instIsPC)
+					else if(instIsPC) // Text color for active instruction
 						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewInstructionActive));
-					else
+					else // Text color for inactive instruction
 						PushStyleColor(ImGuiCol_Text, m_parent->getColor(GuiItem::CodeViewInstruction));
 						
 					Text("%s", disLine.instr.c_str());
@@ -176,4 +215,18 @@ void GuiCodeView::draw()
 	EndChild();
 	
 	PopStyleVar(1);
+}
+
+void GuiCodeView::contextMenuHandler(GMI_Data &menuData)
+{
+	for(auto &mi : m_menuItems)
+	{
+		if(menuData.bpIsSet)
+			mi.label = "Clear breakpoint";
+		else
+			mi.label = "Set breakpoint";
+			
+		memcpy(mi.rawStruct, &menuData, sizeof(menuData));
+		mi.draw();
+	}
 }

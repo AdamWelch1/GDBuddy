@@ -78,6 +78,32 @@ void GDBMI::requestBreakpointList()
 	sendCommand(cmdToken + "-break-list");
 }
 
+void GDBMI::requestRegisterInfo()
+{
+	string cmdToken = getTokenStr();
+	registerCallback(cmdToken, GDBMI::getregValsCallbackThunk);
+	sendCommand(cmdToken + "-data-list-register-values x");
+}
+
+
+void GDBMI::requestBacktrace()
+{
+	string cmdToken = getTokenStr();
+	registerCallback(cmdToken, GDBMI::getStackFramesCallbackThunk);
+	sendCommand(cmdToken + "-stack-list-frames");
+}
+
+void GDBMI::refreshData()
+{
+	requestBreakpointList();
+	requestRegisterInfo();
+	requestBacktrace();
+	requestFunctionSymbols();
+	requestGlobalVarSymbols();
+	requestCurrentExecPos();
+	requestDisassembleAddr("$pc");
+}
+
 
 vector<GDBMI::SymbolObject> GDBMI::getFunctionSymbols()
 {

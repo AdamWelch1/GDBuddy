@@ -22,13 +22,8 @@ void GDBMI::stoppedCallback(GDBResponse resp)
 		logPrintf(LogLevel::Debug, "stoppedCallback() error\n");
 		
 		
-	string cmdToken = getTokenStr();
-	registerCallback(cmdToken, GDBMI::getregValsCallbackThunk);
-	sendCommand(cmdToken + "-data-list-register-values x");
-	
-	cmdToken = getTokenStr();
-	registerCallback(cmdToken, GDBMI::getStackFramesCallbackThunk);
-	sendCommand(cmdToken + "-stack-list-frames");
+	requestRegisterInfo();
+	requestBacktrace();
 	
 	string respData = resp.recordData;
 	KVPair rootPair = parserGetKVPair(respData);
@@ -349,6 +344,10 @@ void GDBMI::getFuncSymbolsCallback(GDBResponse resp)
 		if(symKVP.first != "debug" || getItemType(symKVP.second[0]) != ParseItemType::List)
 			return;
 			
+		m_funcSymMutex.lock();
+		m_functionSymbols.clear();
+		m_funcSymMutex.unlock();
+		
 		string symbolList = symKVP.second;
 		
 		// Strip '[' and ']' off the list
@@ -450,6 +449,10 @@ void GDBMI::getGlobalVarSymbolsCallback(GDBResponse resp)
 		if(symKVP.first != "debug" || getItemType(symKVP.second[0]) != ParseItemType::List)
 			return;
 			
+		m_globalVarMutex.lock();
+		m_globalVarSymbols.clear();
+		m_globalVarMutex.unlock();
+		
 		string symbolList = symKVP.second;
 		
 		// Strip '[' and ']' off the list

@@ -52,6 +52,9 @@ class GDBMI
 		
 		void doFileCommand(FileCmd cmd, string arg);
 		
+		void attachToPID(string pid);
+		void detachInferior();
+		
 		void insertBreakpointAtAddress(string addr);
 		void deleteBreakpoint(uint32_t bpNum);
 		

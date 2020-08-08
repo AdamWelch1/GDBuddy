@@ -45,13 +45,13 @@ int32_t GDBMI::logPrintf(LogLevel ll, const char *fmt, ...)
 	va_list v;
 	va_start(v, fmt);
 	
-	// char logstr[1024 * 32] = {0};
 	char *logstr = m_logParseBuffer;
 	int32_t ret = vsnprintf(logstr, (1024 * 2048), fmt, v);
-	// (1024 * 32 - 8)
-	
 	va_end(v);
 	
+	if(ll > getLogLevel())
+		return 0;
+		
 	string logLabel = getLogLevelLabel(ll);
 	string tColor = getLogLevelColor(ll);
 	string out = tColor + logLabel + string(TERM_DEFAULT) + " ";
@@ -108,6 +108,43 @@ string GDBMI::getLogLevelLabel(LogLevel ll)
 	case LogLevel::Debug: 	 ret = "[Debug]  "; break;
 	// *INDENT-ON*
 	}
+	
+	return ret;
+}
+
+GDBMI::LogLevel GDBMI::getLogLevel()
+{
+	LogLevel ret;
+	m_logMutex.lock();
+	ret = m_logLevel;
+	m_logMutex.unlock();
+	
+	return ret;
+}
+
+void GDBMI::setLogLevel(LogLevel ll)
+{
+	m_logMutex.lock();
+	m_logLevel = ll;
+	m_logMutex.unlock();
+}
+
+void GDBMI::logInferiorOutput(string &str)
+{
+	m_inferiorOutMutex.lock();
+	m_inferiorOutput.push_back(str);
+	m_inferiorOutMutex.unlock();
+	
+	if(m_inferiorOutputCallback != 0)
+		m_inferiorOutputCallback(this);
+}
+
+deque<string> GDBMI::getInferiorOutput()
+{
+	deque<string> ret;
+	m_inferiorOutMutex.lock();
+	ret = m_inferiorOutput;
+	m_inferiorOutMutex.unlock();
 	
 	return ret;
 }

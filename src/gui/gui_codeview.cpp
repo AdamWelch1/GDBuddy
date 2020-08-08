@@ -115,13 +115,30 @@ void GuiCodeView::draw()
 					{
 						// Is this instruction pointed to by the frame GDB just gave us?
 						if(stepFrame.address == disLine.addr)
+						{
 							instIsPC = true;
+							uint64_t tmpaddr = strtoull(stepFrame.address.c_str(), 0, 16);
+							
+							if(m_lastEIPInstruction != tmpaddr)
+							{
+								m_lastEIPInstruction = tmpaddr;
+								m_needUpdateScroll = true;
+							}
+						}
 					}
 					else
 					{
 						// Is this instruction pointed to by the program counter, $pc (ex. eip, rip)?
 						if(curPos.first == strtoull(disLine.addr.c_str(), 0, 16))
+						{
 							instIsPC = true;
+							
+							if(m_lastEIPInstruction != curPos.first)
+							{
+								m_lastEIPInstruction = curPos.first;
+								m_needUpdateScroll = true;
+							}
+						}
 					}
 					
 					// Set BP line background color
@@ -149,9 +166,12 @@ void GuiCodeView::draw()
 						PopStyleColor(1);
 						
 					// Scroll to highlighted instruction
-					if(instIsPC)
+					if(instIsPC && m_needUpdateScroll)
+					{
+						m_needUpdateScroll = false;
 						SetScrollHereY(0.5);
-						
+					}
+					
 					// Highlight item if clicked
 					if(IsItemClicked())
 					{
@@ -164,6 +184,16 @@ void GuiCodeView::draw()
 							else
 								gdb->deleteBreakpoint(breakPoint->number);
 						}
+					}
+					
+					if(selItem && m_parent->isKeyPressed(' '))
+					{
+						if(breakPoint == 0)
+							gdb->insertBreakpointAtAddress(disLine.addr);
+						else
+							gdb->deleteBreakpoint(breakPoint->number);
+							
+						m_parent->clearKeyPress(' ');
 					}
 					
 					// Show context menu on right-click and highlight item
@@ -205,8 +235,11 @@ void GuiCodeView::draw()
 			PopStyleVar(2);
 		}
 		else
+		{
+			m_needUpdateScroll = true;
 			PopStyleColor(1);
-			
+		}
+		
 		m_codeLinesMutex.unlock();
 	}
 	else

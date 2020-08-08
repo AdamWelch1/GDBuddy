@@ -17,6 +17,7 @@ void GuiToolbar::addButton(ButtonInfo &binfo)
 
 void GuiToolbar::draw()
 {
+	ImGuiIO &io = GetIO();
 	BeginGroup();
 	{
 		uint32_t ctr = 0;
@@ -25,9 +26,17 @@ void GuiToolbar::draw()
 			if(button.isVisible() == false)
 				continue;
 				
-			if(Button(button.text.c_str()) && button.onClick != 0)
-				button.onClick();
-				
+			if(m_parent->isKeyboardAvailable() && !m_parent->isPopupOpen())
+			{
+				if((Button(button.text.c_str()) || button.chkKeyCmd()) && button.onClick != 0)
+					button.onClick();
+			}
+			else
+			{
+				if(Button(button.text.c_str()) && button.onClick != 0)
+					button.onClick();
+			}
+			
 			if(IsItemHovered())
 				SetTooltip(button.tooltip.c_str());
 				

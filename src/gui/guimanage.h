@@ -75,12 +75,24 @@ class GuiManager : public GuiParentWrapper
 		mutex &getBreakpointMutex() { return m_bpCacheMutex; }
 		vector<GDBMI::BreakpointInfo> &getBreakpointList() { return m_breakpointCache; }
 		
+		bool isKeyPressed(uint32_t key);
+		void clearKeyPress(uint32_t key);
+		bool isKeyboardAvailable()	{ return !m_wantCaptureKeyboard; }
+		bool isMouseAvailable()		{ return !m_wantCaptureMouse; }
+		bool isPopupOpen() 			{ return m_popupIsOpen;}
 		
-		void showDialog()
-		{
-			m_showLoadInferiorDialog = true;
-		}
+		void showDialog(DialogID dlg);
 		
+		void setMenuBuildCallback(function<void()> cb) { m_menuBuildCB = cb; }
+		void setRebuildMenu(bool set = true) { m_rebuildMenu = set; }
+		
+		void loadRecentFiles();
+		void saveRecentFiles();
+		void addRecentFile(string file);
+		const deque<string> &getRecentFilesList() { return m_recentFiles; }
+		
+		void setInferiorPathInfo(string path) { m_inferiorInfo.path = path; }
+		void setInferiorArgsInfo(string args) { m_inferiorInfo.args = args; }
 		
 		static void updateNotifyCBThunk(GDBMI::UpdateType updateType, void *obj)
 		{ ((GuiManager *) obj)->updateNotifyCB(updateType); }
@@ -94,6 +106,7 @@ class GuiManager : public GuiParentWrapper
 		void mainLoop();
 		
 		void renderFrame();
+		void drawDialogs();
 		
 		// Handles keyboard/mouse input
 		void handleInput();
@@ -142,8 +155,19 @@ class GuiManager : public GuiParentWrapper
 		map<GuiItem, ImVec4> m_guiColors;
 		ImVec2 m_mainWindowSize = {0.0f, 0.0f};
 		
+		bool m_wantCaptureKeyboard = false;
+		bool m_wantCaptureMouse = false;
+		map<uint32_t, bool> m_keypressMap; // Used for shortcuts
 		
 		bool m_exitProgram = false;
+		bool m_popupIsOpen = false;
+		
+		InferiorInfo m_inferiorInfo;
+		
+		deque<string> m_recentFiles;
+		
+		bool m_rebuildMenu = true;
+		function<void()> m_menuBuildCB = 0;
 		
 		SDL_Window *m_sdlWindow;
 		SDL_GLContext *m_glContext;

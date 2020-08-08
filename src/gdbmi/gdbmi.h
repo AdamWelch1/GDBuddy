@@ -16,7 +16,7 @@
 #include <fcntl.h>
 
 #define GDB_HANDLER_THREAD_COUNT	32
-#define GDB_DEFAULT_LOG_LEVEL		LogLevel::Debug
+#define GDB_DEFAULT_LOG_LEVEL		LogLevel::Info
 #define GDB_MAX_LOG_ITEMS			1024
 
 using std::string;

@@ -31,8 +31,14 @@ class GDBMI
 		int32_t logPrintf(LogLevel ll, const char *fmt, ...);
 		
 		deque<LogItem> getLogs();
+		LogLevel getLogLevel();
+		void setLogLevel(LogLevel ll);
+		
+		void logInferiorOutput(string &str);
+		deque<string> getInferiorOutput();
 		
 		void setLogUpdateCB(function<void(GDBMI *)> callback) { m_logUpdateCallback = callback; }
+		void setInferiorOutputCB(function<void(GDBMI *)> callback) { m_inferiorOutputCallback = callback; }
 		
 	private:
 	
@@ -46,7 +52,11 @@ class GDBMI
 		LogLevel m_logLevel;
 		mutex m_logMutex;
 		
+		deque<string> m_inferiorOutput;
+		mutex m_inferiorOutMutex;
+		
 		function<void(GDBMI *)> m_logUpdateCallback = 0;
+		function<void(GDBMI *)> m_inferiorOutputCallback = 0;
 		
 		char *m_logParseBuffer = 0;
 		

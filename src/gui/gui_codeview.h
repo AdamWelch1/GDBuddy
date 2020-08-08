@@ -41,7 +41,9 @@ class GuiCodeView : public GuiChild
 		void contextMenuHandler(GMI_Data &menuData);
 		vector<GuiMenuItem> m_menuItems;
 		
-		uint64_t m_selectedInstruction = 0;
+		uint64_t m_selectedInstruction 	= 0;
+		uint64_t m_lastEIPInstruction	= 0;
+		bool m_needUpdateScroll 		= false;
 		
 		float m_width 				= 400;
 		float m_height 				= 400;

@@ -90,11 +90,12 @@ void GDBMI::handleResponse(string &responseStr)
 		// *INDENT-ON*
 	}
 	
-	if(resp.recordType == GDBRecordType::INVALID)
-		return;
-		
-	responseStr = responseStr.substr(1);
+	// if(resp.recordType == GDBRecordType::INVALID)
+	// 	return;
 	
+	if(resp.recordType != GDBRecordType::INVALID)
+		responseStr = responseStr.substr(1);
+		
 	if(resp.recordType == GDBRecordType::ConsoleStream ||
 			resp.recordType == GDBRecordType::TargetStream ||
 			resp.recordType == GDBRecordType::LogStream)
@@ -152,6 +153,16 @@ void GDBMI::handleResponse(string &responseStr)
 		m_responseQueueMutex.lock();
 		m_responseQueue.push_back(resp);
 		m_responseQueueMutex.unlock();
+		
+	}
+	else
+	{
+		if(responseStr == "(gdb) ")
+			return;
+			
+		// fprintf(stderr, "Inf: %s\n", responseStr.c_str());
+		logInferiorOutput(responseStr);
+		// logPrintf(LogLevel::Warn, "Read invalid record: '%s'", responseStr.c_str());
 	}
 }
 
@@ -180,8 +191,11 @@ void GDBMI::handleResultRecord(GDBResponse response)
 	}
 	
 	if(response.recordClass == "error")
+	{
+		refreshData();
 		return;
-		
+	}
+	
 	logPrintf(LogLevel::Warn, "Unhandled Result record: Token: %s Class: %s; Data: %s\n",
 			  response.recordToken.c_str(),
 			  response.recordClass.c_str(),
@@ -254,7 +268,7 @@ void GDBMI::handleNotifyAsyncRecord(GDBResponse response)
 void GDBMI::handleStreamRecords(GDBResponse response)
 {
 	// if(response.recordType != GDBRecordType::ConsoleStream)
-	// logPrintf(LogLevel::Info, "Stream record: Data: %s\n", response.recordData.c_str());
+	logPrintf(LogLevel::Info, "Stream record: Data: %s\n", response.recordData.c_str());
 }
 
 void GDBMI::registerCallback(string token, CmdCallback cb, void *userData)

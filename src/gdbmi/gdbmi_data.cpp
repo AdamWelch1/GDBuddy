@@ -3,6 +3,11 @@
 
 #define printf(a, ...) logPrintf(LogLevel::NeedsFix, a,## __VA_ARGS__)
 
+void GDBMI::evaluateExpr(string expr)
+{
+	sendCommand(string("-data-evaluate-expression ") + expr);
+}
+
 void GDBMI::requestFunctionSymbols()
 {
 	string token = getTokenStr();

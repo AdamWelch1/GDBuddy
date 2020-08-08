@@ -46,7 +46,7 @@ class GuiMenuBuilder
 		GuiMenuBuilder() {}
 		~GuiMenuBuilder() {}
 		
-		void buildMenu()
+		void drawMenu()
 		{
 			for(auto &menu : m_menuList)
 				menu.draw();
@@ -58,8 +58,13 @@ class GuiMenuBuilder
 				m_menuList.push_back(gmi);
 		}
 		
+		void clear() { m_menuList.clear(); }
+		
+		GuiMenuItem *getMenuItem(vector<string> menuPath);
+		
 	private:
 	
+		GuiMenuItem *findMenuItem(vector<GuiMenuItem> &list, string label);
 		vector<GuiMenuItem> m_menuList;
 };
 

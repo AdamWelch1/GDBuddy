@@ -4,7 +4,8 @@
 #include "gui_defs.h"
 #include "gui_child.h"
 
-typedef void (*gui_drawcb_t)(string tabName, void *userData);
+typedef function<void(string, void *)> gui_drawcb_t;
+// typedef void (*gui_drawcb_t)(string tabName, void *userData);
 
 class GuiTabPanel : public GuiChild
 {

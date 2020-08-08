@@ -172,6 +172,12 @@ void GDBMI::detachInferior()
 	
 	registerCallback(token, detachCB);
 	sendCommand("-target-detach");
+	refreshData();
+}
+
+void GDBMI::setInferiorArgs(string args)
+{
+	sendCommand(string("-exec-arguments ") + args);
 }
 
 

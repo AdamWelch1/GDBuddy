@@ -32,6 +32,16 @@ using std::function;
 #define APP_FONT_ITALICS		"fonts/Anonymous Pro Minus I.ttf"
 #define APP_FONT_BOLDITALIC		"fonts/Anonymous Pro Minus BI.ttf"
 
+#define KEY_CTRL	0
+#define KEY_ALT		1
+#define KEY_SHIFT	2
+#define KEY_ESCAPE	3
+
+enum class DialogID : uint32_t
+{
+	OpenInferior = 100
+};
+
 enum class GuiItem : uint32_t
 {
 	Text,
@@ -56,7 +66,21 @@ enum class GuiItem : uint32_t
 	RegisterProgCtr,
 	RegisterValChg,
 	
-	ActiveFrame
+	ActiveFrame,
+	
+	TabFocused,
+	TabUnfocused,
+	TabHover,
+	TabActive
+	
+	/*
+		ImGuiCol_Tab,
+		ImGuiCol_TabHovered,
+		ImGuiCol_TabActive,
+		ImGuiCol_TabUnfocused,
+		ImGuiCol_TabUnfocusedActive,
+	*/
+	
 };
 
 struct Printable
@@ -101,6 +125,20 @@ struct Printable
 		string __badref = "!!BadReference!!";
 };
 
+struct InferiorInfo : public Printable
+{
+	string path;
+	string args;
+	
+	void update()
+	{
+		cols.clear();
+		cols.push_back("Inferior path: ");
+		cols.push_back(path + "\n");
+		cols.push_back("Inferior Args: ");
+		cols.push_back(args + "\n");
+	}
+};
 
 struct AsmLineDesc : public Printable
 {
@@ -122,6 +160,7 @@ struct ButtonInfo : public Printable
 	string text = "Button";
 	string tooltip = "";
 	function<bool()> isVisible = []() -> bool { return true; };
+	function<bool()> chkKeyCmd = []() -> bool { return false; };
 	function<void()> onClick = 0;
 	
 	void update()

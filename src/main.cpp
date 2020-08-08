@@ -126,43 +126,77 @@ int main(int argc, char **argv)
 		using ExecCmd = GDBMI::ExecCmd;
 		ButtonInfo button;
 		button.text = "Run";
-		button.tooltip = "Run program from the beginning";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Run); };
+		button.tooltip = "(R) Run program from the beginning";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::Run); };
+		button.chkKeyCmd = []() -> bool
+		{ bool ret = gui->isKeyPressed('r'); if(ret) gui->clearKeyPress('r'); return ret; };
 		toolbar.addButton(button), button.onClick = 0;
 		
 		button.text = "Pause";
-		button.tooltip = "Interrupt program execution";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Interrupt); };
+		button.tooltip = "(Ctrl+C) Interrupt program execution";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::Interrupt); };
+		button.chkKeyCmd = []() -> bool
+		{
+			bool ret = gui->isKeyPressed('c');
+			ret = (ret && gui->isKeyPressed(KEY_CTRL));
+			if(ret)
+				gui->clearKeyPress('c');
+			return ret;
+		};
 		toolbar.addButton(button), button.onClick = 0;
 		
 		button.text = "Continue";
-		button.tooltip = "Continue program execution";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Continue); };
-		toolbar.addButton(button), button.onClick = 0;
-		
-		button.text = "Step over line";
-		button.tooltip = "Step over source line";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Next); };
+		button.tooltip = "(C) Continue program execution";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::Continue); };
+		button.chkKeyCmd = []() -> bool
+		{ bool ret = gui->isKeyPressed('c'); if(ret) gui->clearKeyPress('c'); return ret; };
 		toolbar.addButton(button), button.onClick = 0;
 		
 		button.text = "Step line";
-		button.tooltip = "Step source line";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Step); };
+		button.tooltip = "(S) Step source line";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::Step); };
+		button.chkKeyCmd = []() -> bool
+		{ bool ret = gui->isKeyPressed('s'); if(ret) gui->clearKeyPress('s'); return ret; };
 		toolbar.addButton(button), button.onClick = 0;
 		
-		button.text = "Step over inst";
-		button.tooltip = "Step over instruction";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::NextInstruction); };
+		button.text = "Step over line";
+		button.tooltip = "(Shift+S) Step over source line";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::Next); };
+		button.chkKeyCmd = []() -> bool
+		{
+			bool ret = gui->isKeyPressed('s');
+			ret = (ret && gui->isKeyPressed(KEY_SHIFT));
+			if(ret)
+				gui->clearKeyPress('s');
+			return ret;
+		};
 		toolbar.addButton(button), button.onClick = 0;
 		
 		button.text = "Step inst";
-		button.tooltip = "Step instruction";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::StepInstruction); };
+		button.tooltip = "(I) Step instruction";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::StepInstruction); };
+		button.chkKeyCmd = []() -> bool
+		{ bool ret = gui->isKeyPressed('i'); if(ret) gui->clearKeyPress('i'); return ret; };
+		toolbar.addButton(button), button.onClick = 0;
+		
+		button.text = "Step over inst";
+		button.tooltip = "(Shift+I) Step over instruction";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::NextInstruction); };
+		button.chkKeyCmd = []() -> bool
+		{
+			bool ret = gui->isKeyPressed('i');
+			ret = (ret && gui->isKeyPressed(KEY_SHIFT));
+			if(ret)
+				gui->clearKeyPress('i');
+			return ret;
+		};
 		toolbar.addButton(button), button.onClick = 0;
 		
 		button.text = "Finish exec";
-		button.tooltip = "Execute until current function returns";
-		button.onClick = [&]() { gdb->doExecCommand(ExecCmd::Finish); };
+		button.tooltip = "(F) Execute until current function returns";
+		button.onClick 	 = [&]() { gdb->doExecCommand(ExecCmd::Finish); };
+		button.chkKeyCmd = []() -> bool
+		{ bool ret = gui->isKeyPressed('f'); if(ret) gui->clearKeyPress('f'); return ret; };
 		toolbar.addButton(button), button.onClick = 0;
 	}
 	
@@ -172,7 +206,24 @@ int main(int argc, char **argv)
 	stackPanel.addTab("Breakpoints", breakpointsTabPainter);
 	// stackPanel.addTab("Stack dump", 0);
 	
-	GuiConsole console(0.65, 0.33);
+	
+	GuiConsole gdbConsole(0.0f, 0.0f);
+	GuiConsole infConsole(0.0f, 0.0f);
+	gdbConsole.setParent(gui);
+	infConsole.setParent(gui);
+	
+	auto consolePainter = [&](string tabName, void *userData) -> void
+	{
+		if(tabName == "Debugger")
+			gdbConsole.draw();
+		else if(tabName == "Inferior")
+			infConsole.draw();
+	};
+	
+	GuiTabPanel consolePanel("ConsolePanel", 0.65, 0.33);
+	consolePanel.addTab("Debugger", consolePainter);
+	consolePanel.addTab("Inferior", consolePainter);
+	// GuiConsole console(0.65, 0.33);
 	
 	auto logUpdateCB = [&](GDBMI * dbg)
 	{
@@ -211,119 +262,198 @@ int main(int argc, char **argv)
 			tmpList.push_back(tmp);
 		}
 		
-		console.clear();
-		console.addItems(tmpList);
+		gdbConsole.clear();
+		gdbConsole.addItems(tmpList);
+	};
+	
+	auto inferiorOutputUpdateCB = [&](GDBMI * dbg)
+	{
+		deque<string> output = dbg->getInferiorOutput();
+		
+		vector<ConsoleItem> tmpList;
+		for(auto &str : output)
+		{
+			ConsoleItem tmp;
+			tmp.text = str;
+			
+			tmpList.push_back(tmp);
+		}
+		
+		infConsole.clear();
+		infConsole.addItems(tmpList);
 	};
 	
 	gdb->setLogUpdateCB(logUpdateCB);
+	gdb->setInferiorOutputCB(inferiorOutputUpdateCB);
 	
 	gui->addChild(&toolbar);
 	gui->addChild(&leftPanel);
 	gui->addChild(&codeView);
 	gui->addChild(&rightPanel);
-	gui->addChild(&console);
+	// gui->addChild(&gdbConsole);
+	gui->addChild(&consolePanel);
 	gui->addChild(&stackPanel);
 	
+	
 	GuiMenuBuilder appMenu;
-	GuiMenuItem menuItem;
-	GuiMenuItem subItem;
-	
-	/*
-		MenuItemType type = MenuItemType::Regular;
-		string label = "Menu Item";
-		string shortcut = "";
-		bool isToggled = false;
-		bool isEnabled = true;
-		vector<GuiMenuItem> subItems;
-		MenuItemCallback cbFunc = 0;
-	*/
-	
-	menuItem.label = "File";
-	menuItem.type = MenuItemType::Submenu;
-	
-	// Create file menu items
+	auto menuBuilder = [&]() -> void
 	{
-		subItem = // Open inferior
-		{
-			MenuItemType::Regular,
-			"Open inferior...",
-			"Ctrl+O",
-			false,	// Toggled
-			true,	// Enabled
-			{},		// Vector of submenu items
-			[](GuiMenuItem * obj) -> void
-			{
-				gui->showDialog();
-			}
-		};
-		menuItem.subItems.push_back(subItem);
+		appMenu.clear();
 		
-		subItem = // Attach to process
+		GuiMenuItem menuItem;
+		GuiMenuItem subItem;
+		
+		menuItem.type = MenuItemType::Submenu;
+		menuItem.label = "File";
 		{
-			MenuItemType::Regular,
-			"Attach to process",
-			"",		// Shortcut
-			false,	// Toggled
-			true,	// Enabled
-			{},		// Vector of submenu items
-			[](GuiMenuItem * obj) -> void
+			subItem = // Open inferior
 			{
+				MenuItemType::Regular,
+				"Open inferior...",
+				"Ctrl+O",
+				false,	// Toggled
+				true,	// Enabled
+				{},		// Vector of submenu items
+				[](GuiMenuItem * obj) -> void
+				{
+					gui->showDialog(DialogID::OpenInferior);
+				}
+			};
+			menuItem.subItems.push_back(subItem);
 			
-			}
-		};
-		menuItem.subItems.push_back(subItem);
-		
-		subItem = // Detach from inferior
-		{
-			MenuItemType::Regular,
-			"Detach from inferior",
-			"",		// Shortcut
-			false,	// Toggled
-			true,	// Enabled
-			{},		// Vector of submenu items
-			[](GuiMenuItem * obj) -> void
+			subItem = // Attach to process
 			{
-				gdb->detachInferior();
-			}
-		};
-		menuItem.subItems.push_back(subItem);
-		
-		subItem = // Detach and terminate
-		{
-			MenuItemType::Regular,
-			"Detach and terminate",
-			"",		// Shortcut
-			false,	// Toggled
-			true,	// Enabled
-			{},		// Vector of submenu items
-			[](GuiMenuItem * obj) -> void
-			{
+				MenuItemType::Regular,
+				"Attach to process",
+				"",		// Shortcut
+				false,	// Toggled
+				true,	// Enabled
+				{},		// Vector of submenu items
+				[](GuiMenuItem * obj) -> void
+				{
+				
+				}
+			};
+			menuItem.subItems.push_back(subItem);
 			
-			}
-		};
-		menuItem.subItems.push_back(subItem);
-		menuItem.subItems.push_back({MenuItemType::Separator});
-		
-		subItem = // Exit
-		{
-			MenuItemType::Regular,
-			"Exit",
-			"",		// Shortcut
-			false,	// Toggled
-			true,	// Enabled
-			{},		// Vector of submenu items
-			[](GuiMenuItem * obj) -> void
+			subItem = // Recently opened files submenu
 			{
-				gui->exit();
+				MenuItemType::Submenu,
+				"Recently opened",
+				"",		// Shortcut
+				false,	// Toggled
+				true,	// Enabled
+				{},		// Vector of submenu items
+				0		// Callback function
+			};
+			
+			const deque<string> &recentFiles = gui->getRecentFilesList();
+			if(recentFiles.size() > 0)
+			{
+				for(const auto &file : recentFiles)
+				{
+					GuiMenuItem tmp =
+					{
+						MenuItemType::Regular,
+						file.c_str(),
+						"",		// Shortcut
+						false,	// Toggled
+						true,	// Enabled
+						{},		// Vector of submenu items
+						[](GuiMenuItem * obj) -> void
+						{
+							string txtIn = obj->label;
+							string txtCmd;
+							string txtArg;
+							
+							if(txtIn.length() > 0)
+								gui->addRecentFile(txtIn);
+								
+							if(txtIn.length() > 0 && txtIn.find(' ') != string::npos)
+							{
+								size_t pos = txtIn.find(' ');
+								txtCmd = txtIn.substr(0, pos);
+								txtArg = txtIn.substr(pos + 1);
+							}
+							else
+								txtCmd = txtIn;
+								
+							gui->setInferiorPathInfo(txtCmd);
+							gui->setInferiorArgsInfo(txtArg);
+							gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, txtCmd.c_str());
+							gdb->setInferiorArgs(txtArg);
+						}
+					};
+					
+					subItem.subItems.push_back(tmp);
+				}
 			}
-		};
-		menuItem.subItems.push_back(subItem);
-	}
+			
+			menuItem.subItems.push_back(subItem);
+			menuItem.subItems.push_back({MenuItemType::Separator});
+			
+			subItem = // Exit
+			{
+				MenuItemType::Regular,
+				"Exit",
+				"Ctrl+Q",		// Shortcut
+				false,	// Toggled
+				true,	// Enabled
+				{},		// Vector of submenu items
+				[](GuiMenuItem * obj) -> void
+				{
+					gui->exit();
+				}
+			};
+			menuItem.subItems.push_back(subItem);
+		}
+		appMenu.addMenu(menuItem);
+		menuItem.subItems.clear();
+		
+		menuItem.label = "Debug";
+		{
+			subItem = // Detach from inferior
+			{
+				MenuItemType::Regular,
+				"Detach from inferior",
+				"",		// Shortcut
+				false,	// Toggled
+				true,	// Enabled
+				{},		// Vector of submenu items
+				[](GuiMenuItem * obj) -> void
+				{
+					gdb->detachInferior();
+				}
+			};
+			menuItem.subItems.push_back(subItem);
+			
+			subItem = // Detach and terminate
+			{
+				MenuItemType::Regular,
+				"Detach and terminate",
+				"",		// Shortcut
+				false,	// Toggled
+				true,	// Enabled
+				{},		// Vector of submenu items
+				[](GuiMenuItem * obj) -> void
+				{
+					gdb->evaluateExpr("(void)exit(0)");
+					gdb->detachInferior();
+				}
+			};
+			menuItem.subItems.push_back(subItem);
+		}
+		
+		appMenu.addMenu(menuItem);
+		gui->setMenuBuilder(appMenu);
+		gui->setRebuildMenu(false);
+	};
 	
-	appMenu.addMenu(menuItem);
 	gui->setMenuBuilder(appMenu);
+	gui->setMenuBuildCallback(menuBuilder);
+	gui->setRebuildMenu();
 	
-	gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/home/aj/code/huffman/main");
+	gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, "/home/aj/code/shell-calc/calc");
 	gui->run();
 	
 	
@@ -367,7 +497,7 @@ void symbolTabPainter(string tabName, void *userData)
 				PushFont(gui->getBoldFont());
 				
 			string itemText = funcList[i].description;
-			if(Selectable(itemText.c_str(), (selectedFunc == itemText)))
+			if(Selectable((string(" ") + itemText).c_str(), (selectedFunc == itemText)))
 				selectedFunc = itemText;
 				
 			if(funcIsActive)
@@ -400,7 +530,7 @@ void symbolTabPainter(string tabName, void *userData)
 			// continue;
 			
 			string itemText = gvarList[i].description;
-			if(Selectable(itemText.c_str(), (selectedVar == itemText)))
+			if(Selectable((string(" ") + itemText).c_str(), (selectedVar == itemText)))
 				selectedVar = itemText;
 				
 			if(IsItemHovered())
@@ -650,9 +780,4 @@ void breakpointsTabPainter(string tabName, void *userData)
 	
 	Columns(1);
 	bpMutex.unlock();
-}
-
-void appMenuBuilder()
-{
-
 }

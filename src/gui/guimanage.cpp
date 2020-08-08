@@ -33,11 +33,14 @@ GuiManager::GuiManager(SDL_Window *sdlWin, SDL_GLContext *glCtx)
 	m_boldFont			= m_io->Fonts->AddFontFromFileTTF(APP_FONT_BOLD, APP_FONT_SIZE);
 	m_italicFont		= m_io->Fonts->AddFontFromFileTTF(APP_FONT_ITALICS, APP_FONT_SIZE);
 	m_boldItalicFont	= m_io->Fonts->AddFontFromFileTTF(APP_FONT_BOLDITALIC, APP_FONT_SIZE);
+	m_io->ConfigFlags	|= ImGuiConfigFlags_NavNoCaptureKeyboard;
 	// (void)io;
 	//m_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 	
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
+	
+	loadRecentFiles();
 	
 	// Setup Platform/Renderer bindings
 	ImGui_ImplSDL2_InitForOpenGL(m_sdlWindow, *m_glContext);
@@ -70,16 +73,11 @@ GuiManager::GuiManager(SDL_Window *sdlWin, SDL_GLContext *glCtx)
 	m_guiColors[GuiItem::RegisterValChg] = MakeColor(226, 200, 0, 255);				// Text color of changed registers
 	m_guiColors[GuiItem::ActiveFrame] = MakeColor(103, 75, 0, 255);					// B.trace sel. frame bg color
 	
-	/*
-		float addrColor[4] = {0.000f, 0.748f, 0.856f, 1.000f};
-		float instColor[4] = {0.879f, 0.613f, 0.000f, 1.000f};
-		float colorHover[4] = {(45.0 / 255.0), (78.0 / 255.0), (106 / 255.0), 1.0};
-		float colorColHeader[4] = {0.118f, 0.139f, 0.209f, 1.000f}; // Column header color
-		PushStyleColor(ImGuiCol_ChildBg, (ImVec4) ImColor(40, 41, 35));
-		PushStyleColor(ImGuiCol_FrameBg, (ImVec4) ImColor(40, 41, 35));
-		PushStyleColor(ImGuiCol_Header, (ImVec4) ImColor(56, 56, 48));
-		PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(colorHover));
-	*/
+	m_guiColors[GuiItem::TabFocused] = MakeColor(58, 66, 78, 255);
+	m_guiColors[GuiItem::TabUnfocused] = MakeColor(58, 66, 78, 255);
+	m_guiColors[GuiItem::TabHover] = MakeColor(60, 97, 160, 255);
+	m_guiColors[GuiItem::TabActive] = MakeColor(48, 78, 128, 255);
+	
 }
 
 GuiManager::~GuiManager()
@@ -102,6 +100,10 @@ void GuiManager::mainLoop()
 	
 	while(!m_exitProgram)
 	{
+		// Dear ImGui suggests doing this before the NewFrame() call, so... here we go
+		m_wantCaptureKeyboard	= GetIO().WantCaptureKeyboard;
+		m_wantCaptureMouse		= GetIO().WantCaptureMouse;
+		
 		// Input must be grabbed before the NewFrame() call
 		handleInput();
 		
@@ -129,6 +131,15 @@ void GuiManager::mainLoop()
 
 void GuiManager::renderFrame()
 {
+	if(isKeyboardAvailable())
+	{
+		if(isKeyPressed(KEY_CTRL) && isKeyPressed('o'))
+			m_showLoadInferiorDialog = true;
+			
+		if(isKeyPressed(KEY_CTRL) && isKeyPressed('q'))
+			m_exitProgram = true;
+	}
+	
 	ImGuiWindowFlags_ mainWindowFlags = (ImGuiWindowFlags_)
 										(ImGuiWindowFlags_NoTitleBar |
 										 ImGuiWindowFlags_NoResize |
@@ -149,50 +160,29 @@ void GuiManager::renderFrame()
 	PushStyleColor(ImGuiCol_HeaderHovered, getColor(GuiItem::ListItemBackgroundHover));
 	PushStyleColor(ImGuiCol_HeaderActive, getColor(GuiItem::ListItemBackgroundHover));
 	
+	PushStyleColor(ImGuiCol_Tab, getColor(GuiItem::TabFocused));
+	PushStyleColor(ImGuiCol_TabHovered, getColor(GuiItem::TabHover));
+	PushStyleColor(ImGuiCol_TabActive, getColor(GuiItem::TabActive));
+	PushStyleColor(ImGuiCol_TabUnfocused, getColor(GuiItem::TabUnfocused));
+	PushStyleColor(ImGuiCol_TabUnfocusedActive, getColor(GuiItem::TabFocused));
+	
 	if(BeginMenuBar())
 	{
-		m_menuBuilder.buildMenu();
+		if(m_rebuildMenu && m_menuBuildCB != 0)
+			m_menuBuildCB();
+			
+		m_menuBuilder.drawMenu();
 		EndMenuBar();
 	}
 	
-	static char textInputBuf[4096] = {0};
-	ImVec2 center(GetIO().DisplaySize.x * 0.5f, GetIO().DisplaySize.y * 0.5f);
-	SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-	
 	if(m_showLoadInferiorDialog)
-		OpenPopup("Openinferior");
-		
-	if(BeginPopupModal("Openinferior", 0, ImGuiWindowFlags_AlwaysAutoResize))
 	{
-		m_showLoadInferiorDialog = false;
-		bool inputApply = false;
-		
-		Text("Inferior path: ");
-		SameLine();
-		
-		SetKeyboardFocusHere();
-		if(InputText("Inferiorpath", textInputBuf, 4095, ImGuiInputTextFlags_EnterReturnsTrue))
-			inputApply = true;
-		SetItemDefaultFocus();
-		SameLine();
-		
-		if(inputApply || Button("Okay"))
-		{
-			gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, textInputBuf);
-			memset(textInputBuf, 0, 4096);
-			CloseCurrentPopup();
-		}
-		
-		SameLine();
-		
-		if(Button("Cancel"))
-		{
-			CloseCurrentPopup();
-			memset(textInputBuf, 0, 4096);
-		}
-		
-		EndPopup();
+		OpenPopup("Openinferior");
+		clearKeyPress(KEY_CTRL);
+		clearKeyPress('o');
 	}
+	
+	drawDialogs();
 	
 	uint32_t ctr = 0;
 	for(auto &child : m_guiChildren)
@@ -212,10 +202,118 @@ void GuiManager::renderFrame()
 		ctr++;
 	}
 	
-	PopStyleColor(4);
+	PopStyleColor(9);
 	
 	m_mainWindowSize.x = xStart;
 	ImGui::End();
+}
+
+void GuiManager::drawDialogs()
+{
+	ImVec2 center(GetIO().DisplaySize.x * 0.5f, GetIO().DisplaySize.y * 0.15f);
+	SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+	
+	if(BeginPopupModal("Openinferior", 0, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		m_popupIsOpen = true;
+		
+		static char textInputBuf[4096] = {0};
+		static bool inputApply = false;
+		
+		Text("Optionally, you may specify the program arguments here as well");
+		Text("Inferior path: ");
+		SameLine();
+		
+		if(IsWindowAppearing())
+			SetKeyboardFocusHere(); // Sets keyboard focus to next widget
+			
+		SetNextItemWidth(500.0f);
+		if(InputText("Inferiorpath", textInputBuf, 4095, ImGuiInputTextFlags_EnterReturnsTrue))
+			inputApply = true;
+			
+		m_showLoadInferiorDialog = false;
+		SameLine();
+		
+		if(inputApply || Button("Okay"))
+		{
+			inputApply = false;
+			string txtIn = textInputBuf;
+			string txtCmd;
+			string txtArg;
+			
+			if(txtIn.length() > 0)
+				addRecentFile(txtIn);
+				
+			if(txtIn.length() > 0 && txtIn.find(' ') != string::npos)
+			{
+				size_t pos = txtIn.find(' ');
+				txtCmd = txtIn.substr(0, pos);
+				txtArg = txtIn.substr(pos + 1);
+			}
+			else
+				txtCmd = txtIn;
+				
+			m_inferiorInfo.path = txtCmd;
+			m_inferiorInfo.args = txtArg;
+			
+			gdb->doFileCommand(GDBMI::FileCmd::FileExecWithSymbols, txtCmd.c_str());
+			gdb->setInferiorArgs(txtArg);
+			memset(textInputBuf, 0, 4096);
+			CloseCurrentPopup();
+			m_popupIsOpen = false;
+		}
+		
+		SameLine();
+		
+		bool escape = false;
+		if(m_keypressMap[KEY_ESCAPE])
+			escape = true;
+			
+		if(escape || Button("Cancel"))
+		{
+			if(escape)
+				m_keypressMap[KEY_ESCAPE] = false;
+				
+			CloseCurrentPopup();
+			memset(textInputBuf, 0, 4096);
+			m_popupIsOpen = false;
+		}
+		
+		if(m_recentFiles.size() > 0)
+		{
+			Text("Recently opened:");
+			
+			for(auto &file : m_recentFiles)
+			{
+				Selectable(file.c_str(),
+						   false,
+						   (ImGuiSelectableFlags_DontClosePopups |
+							ImGuiSelectableFlags_AllowDoubleClick));
+							
+				if(IsItemClicked())
+				{
+					strcpy(textInputBuf, file.c_str());
+					
+					if(IsMouseDoubleClicked(0)) // 0 = left button in ImGui...
+						inputApply = true;
+				}
+			}
+		}
+		
+		EndPopup();
+	}
+}
+
+void GuiManager::showDialog(DialogID dlg)
+{
+	switch(dlg)
+	{
+		case DialogID::OpenInferior:
+		{
+			m_showLoadInferiorDialog = true;
+		}
+		break;
+	}
 }
 
 void GuiManager::handleInput()
@@ -235,18 +333,113 @@ void GuiManager::handleInput()
 		// On my system at least, the maximized SDL window
 		// likes to re-appear a few hundred pixels offset from
 		// origin 0,0. This fixes that.
-		if(event.type == SDL_WINDOWEVENT)
+		if(event.type == SDL_KEYUP || event.type == SDL_KEYDOWN)
 		{
-			switch(event.window.event)
+			SDL_Keysym keysym = event.key.keysym;
+			//
+			auto isShortcutChar = [&](uint32_t c) -> bool
 			{
-				case SDL_WINDOWEVENT_SHOWN:
-				case SDL_WINDOWEVENT_EXPOSED:
-					// case SDL_WINDOWEVENT_MOVED:
-					// case SDL_WINDOWEVENT_RESTORED:
+				if(c >= SDLK_F1 && c <= SDLK_F12)
+					return true;
+					
+				if(c < 32 || c > 126)
+					return false;
+					
+				char check = (char) c;
+				char scChars[] = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+,./<>?;:[]{}\\| ";
+				
+				for(uint32_t i = 0; i < strlen(scChars); i++)
 				{
-					// SDL_SetWindowPosition(m_sdlWindow, 0, 0);
+					if(check == scChars[i])
+						return true;
+				}
+				
+				return false;
+			};
+			
+			switch(keysym.sym)
+			{
+				case SDLK_RCTRL:
+				case SDLK_LCTRL:
+				case SDLK_RSHIFT:
+				case SDLK_LSHIFT:
+				case SDLK_LALT:
+				case SDLK_RALT:
+				{
+					if(event.key.state == SDL_RELEASED)
+					{
+						if(keysym.sym == SDLK_RCTRL || keysym.sym == SDLK_LCTRL)
+							m_keypressMap[KEY_CTRL] = false;
+							
+						if(keysym.sym == SDLK_RSHIFT || keysym.sym == SDLK_LSHIFT)
+							m_keypressMap[KEY_SHIFT] = false;
+							
+						if(keysym.sym == SDLK_RALT || keysym.sym == SDLK_LALT)
+							m_keypressMap[KEY_ALT] = false;
+					}
+					else if(event.key.repeat == 0)
+					{
+						if(keysym.sym == SDLK_RCTRL || keysym.sym == SDLK_LCTRL)
+							m_keypressMap[KEY_CTRL] = true;
+							
+						if(keysym.sym == SDLK_RSHIFT || keysym.sym == SDLK_LSHIFT)
+							m_keypressMap[KEY_SHIFT] = true;
+							
+						if(keysym.sym == SDLK_RALT || keysym.sym == SDLK_LALT)
+							m_keypressMap[KEY_ALT] = true;
+					}
 				}
 				break;
+				
+				case SDLK_ESCAPE:
+				{
+					if(event.key.state == SDL_RELEASED)
+						m_keypressMap[KEY_ESCAPE] = false;
+					else if(event.key.repeat == 0)
+						m_keypressMap[KEY_ESCAPE] = true;
+				}
+				break;
+			}
+			
+			if(isShortcutChar(keysym.sym))
+			{
+				if(event.key.state == SDL_RELEASED)
+				{
+					// if(m_keypressMap[keysym.sym] == true)
+					// gdb->logPrintf(GDBMI::LogLevel::Debug,
+					// 			   "Key released: %c (CTRL=%u ALT=%u SHIFT=%u)\n",
+					// 			   (char) keysym.sym,
+					// 			   m_keypressMap[KEY_CTRL],
+					// 			   m_keypressMap[KEY_ALT],
+					// 			   m_keypressMap[KEY_SHIFT]);
+					m_keypressMap[keysym.sym] = false;
+				}
+				else if(event.key.repeat == 0)
+				{
+					// if(m_keypressMap[keysym.sym] == false)
+					// gdb->logPrintf(GDBMI::LogLevel::Debug,
+					// 			   "Key pressed: %c (CTRL=%u ALT=%u SHIFT=%u)\n",
+					// 			   (char) keysym.sym,
+					// 			   m_keypressMap[KEY_CTRL],
+					// 			   m_keypressMap[KEY_ALT],
+					// 			   m_keypressMap[KEY_SHIFT]);
+					m_keypressMap[keysym.sym] = true;
+				}
+				
+				if((keysym.mod & KMOD_CTRL) != 0)
+					m_keypressMap[KEY_CTRL] = true;
+				else
+					m_keypressMap[KEY_CTRL] = false;
+					
+				if((keysym.mod & KMOD_ALT) != 0)
+					m_keypressMap[KEY_ALT] = true;
+				else
+					m_keypressMap[KEY_ALT] = false;
+					
+				if((keysym.mod & KMOD_SHIFT) != 0)
+					m_keypressMap[KEY_SHIFT] = true;
+				else
+					m_keypressMap[KEY_SHIFT] = false;
 			}
 		}
 	}
@@ -377,3 +570,101 @@ void GuiManager::cacheHandlerThread()
 	}
 }
 
+bool GuiManager::isKeyPressed(uint32_t key)
+{
+	if(m_keypressMap.find(key) == m_keypressMap.end())
+		return false;
+		
+	return m_keypressMap[key];
+}
+
+void GuiManager::clearKeyPress(uint32_t key)
+{
+	m_keypressMap[key] = false;
+}
+
+void GuiManager::loadRecentFiles()
+{
+	FILE *fp = fopen("./.recent_files.gdbuddy", "rb");
+	
+	if(fp)
+	{
+		fprintf(stderr, "********** Loading recent files\n");
+		char readBuf[1024] = {0};
+		while(!feof(fp))
+		{
+			memset(readBuf, 0, 1024);
+			char *readRes = fgets(readBuf, 1024, fp);
+			
+			if(readRes)
+			{
+				string tmp = readRes;
+				
+				size_t nlPos = tmp.find('\n');
+				while(nlPos != string::npos)
+				{
+					tmp.erase(tmp.begin() + nlPos);
+					nlPos = tmp.find('\n');
+				}
+				
+				m_recentFiles.push_back(tmp);
+			}
+		}
+		
+		fclose(fp);
+	}
+}
+
+void GuiManager::saveRecentFiles()
+{
+	FILE *fp = fopen("./.recent_files.gdbuddy", "wb");
+	
+	if(fp)
+	{
+		fprintf(stderr, "********** Saving recent files\n");
+		for(auto str : m_recentFiles)
+		{
+			str += "\n";
+			fwrite(str.c_str(), str.length(), 1, fp);
+		}
+		
+		fflush(fp);
+		fclose(fp);
+	}
+}
+
+void GuiManager::addRecentFile(string file)
+{
+	fprintf(stderr, "********** Adding a recent file\n");
+	auto findRecent = [&](const string & str) -> int32_t
+	{
+		if(str.length() == 0)
+			return -1;
+			
+		for(uint32_t i = 0; i < m_recentFiles.size(); i++)
+		{
+			if(m_recentFiles[i] == str)
+				return i;
+		}
+		
+		return -1;
+	};
+	
+	size_t nlPos = file.find('\n');
+	while(nlPos != string::npos)
+	{
+		file.erase(file.begin() + nlPos);
+		nlPos = file.find('\n');
+	}
+	
+	int32_t findRes = findRecent(file);
+	while(findRes != -1)
+	{
+		m_recentFiles.erase(m_recentFiles.begin() + findRes);
+		findRes = findRecent(file);
+	}
+	
+	m_recentFiles.push_front(file);
+	saveRecentFiles();
+	m_rebuildMenu = true;
+}

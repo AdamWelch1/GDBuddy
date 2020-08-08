@@ -145,6 +145,8 @@ class GDBMI
 		void setNotifyCallback(NotifyCallback cbFunc, void *userData = 0)
 		{ m_notifyCallback = cbFunc; m_notifyUserData = userData; }
 		
+		void evaluateExpr(string expr);
+		
 		void requestDisassembleAddr(string addr);
 		void requestDisassembleFunc(string func) { requestDisassembleAddr(func); }
 		void requestDisassembleLine(string file, string line);

@@ -313,17 +313,17 @@ void GDBMI::libUnloadedCallback(GDBResponse resp)
 
 void GDBMI::threadCreatedCallback(GDBResponse resp)
 {
-	logPrintf(LogLevel::Info, "Thread created\n");
+	logPrintf(LogLevel::Verbose, "Thread created\n");
 }
 
 void GDBMI::threadSelectedCallback(GDBResponse resp)
 {
-	logPrintf(LogLevel::Info, "Thread selected\n");
+	logPrintf(LogLevel::Verbose, "Thread selected\n");
 }
 
 void GDBMI::threadExitedCallback(GDBResponse resp)
 {
-	logPrintf(LogLevel::Info, "Thread exited\n");
+	logPrintf(LogLevel::Verbose, "Thread exited\n");
 }
 
 
@@ -341,12 +341,17 @@ void GDBMI::getFuncSymbolsCallback(GDBResponse resp)
 		string symbolTuple = parserGetTuple(rootPair.second);
 		KVPair symKVP = parserGetKVPair(symbolTuple);
 		
-		if(symKVP.first != "debug" || getItemType(symKVP.second[0]) != ParseItemType::List)
-			return;
-			
 		m_funcSymMutex.lock();
 		m_functionSymbols.clear();
 		m_funcSymMutex.unlock();
+		
+		if(symKVP.first != "debug" || getItemType(symKVP.second[0]) != ParseItemType::List)
+		{
+			if(m_notifyCallback != 0)
+				m_notifyCallback(UpdateType::FuncSymbols, m_notifyUserData);
+				
+			return;
+		}
 		
 		string symbolList = symKVP.second;
 		

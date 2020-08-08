@@ -47,7 +47,7 @@ void GDBMI::readThread()
 				string respStr = gdbResponseBuf.substr(0, nlPos);
 				gdbResponseBuf = gdbResponseBuf.substr(nlPos + 1);
 				
-				// printf("Raw input: %s\n", respStr.c_str());
+				// printf("Raw input: \t%s\n", respStr.substr(0, 400).c_str());
 				
 				// Pass the response string off to the response handlers
 				handleResponse(respStr);

@@ -43,6 +43,11 @@ class GuiParentWrapper
 		virtual vector<GDBMI::SymbolObject> &getGlobVarList() = 0;
 		virtual mutex &getBreakpointMutex() = 0;
 		virtual vector<GDBMI::BreakpointInfo> &getBreakpointList() = 0;
+		virtual bool isKeyPressed(uint32_t key) = 0;
+		virtual void clearKeyPress(uint32_t key) = 0;
+		virtual bool isKeyboardAvailable() = 0;
+		virtual bool isMouseAvailable() = 0;
+		virtual bool isPopupOpen() = 0;
 };
 
 #endif

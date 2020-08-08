@@ -44,15 +44,16 @@ void GuiTabPanel::draw()
 	if(m_sameLine)
 		SameLine();
 		
-	// ImVec2 availSize = GetContentRegionAvail();
 	ImVec2 mwSize = m_parent->getMainWindowSize();
-	if(BeginChild(string(m_panelName + "panel").c_str(), {mwSize.x * m_width, mwSize.y * m_height},
-				  true))
+	
+	PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0, 0.0));
+	if(BeginChild(string(m_panelName + "panel").c_str(), {mwSize.x * m_width, mwSize.y * m_height}, true))
 	{
+		PopStyleVar(1);
 		static ImGuiTabBarFlags_ tabFlags = (ImGuiTabBarFlags_) \
 											(ImGuiTabBarFlags_Reorderable |
 											 ImGuiTabBarFlags_NoCloseWithMiddleMouseButton |
-											 ImGuiTabBarFlags_FittingPolicyResizeDown);
+											 ImGuiTabBarFlags_FittingPolicyScroll);
 											 
 		if(BeginTabBar(string(m_panelName + "tablist").c_str(), tabFlags))
 		{
@@ -73,6 +74,8 @@ void GuiTabPanel::draw()
 		}
 		
 	}
+	else
+		PopStyleVar(1);
 	EndChild();
 	
 }

@@ -54,6 +54,7 @@ class GDBMI
 		
 		void attachToPID(string pid);
 		void detachInferior();
+		void setInferiorArgs(string args);
 		
 		void insertBreakpointAtAddress(string addr);
 		void deleteBreakpoint(uint32_t bpNum);

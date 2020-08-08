@@ -3,9 +3,9 @@
 GDBuddy is a GUI frontend for GDB with the aim of providing an intuitive interface to the more advanced features of GDB as well as augmenting GDB with features more suited to a graphical environment. 
 
 [<img alt="Image of GDBuddy GUI" src="images/gui_image.png" width="400">](https://raw.githubusercontent.com/AdamWelch1/GDBuddy/master/images/gui_image.png)
+[<img alt="Image of GDBuddy GUI" src="images/gui_image2.png" width="400">](https://raw.githubusercontent.com/AdamWelch1/GDBuddy/master/images/gui_image2.png)
 
-GDBuddy is still in the very early stages of development and is currently not to the point of being useable just yet. It will currently load an inferior and step through either source lines or instructions as well as set and clear
-breakpoints. It currently cannot modify the inferior state in any way.
+GDBuddy is still in the early stages of development and is currently lacking many fefatures. It reads function and variable symbols, local variables and stack frames, and the contents of the general registers. It can load and detach from inferiors, and keyboard shortcuts are provided for most actions. It's also possible to set and clear breakpoints, and a breakpoint list is available as well. Finally, the standard output of the inferior process is displayed in a separate console. The ability to modify the running state of the inferior has not yet been implemented.
 
 GDBuddy aims to provide an intuitive interface to the advanced features offered by GDB, such as:
 

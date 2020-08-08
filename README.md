@@ -2,7 +2,7 @@
 
 GDBuddy is a GUI frontend for GDB with the aim of providing an intuitive interface to the more advanced features of GDB as well as augmenting GDB with features more suited to a graphical environment. 
 
-<img alt="Image of GDBuddy GUI" src="images/gui_image.png" width="400">
+[<img alt="Image of GDBuddy GUI" src="images/gui_image.png" width="400">](https://raw.githubusercontent.com/AdamWelch1/GDBuddy/master/images/gui_image.png)
 
 GDBuddy is still in the very early stages of development and is currently not to the point of being useable just yet. It will currently load an inferior and step through either source lines or instructions as well as set and clear
 breakpoints. It currently cannot modify the inferior state in any way.
